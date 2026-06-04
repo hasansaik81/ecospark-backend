@@ -1,0 +1,59 @@
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│      User       │     │      Idea       │     │    Category     │
+├─────────────────┤     ├─────────────────┤     ├─────────────────┤
+│ id (PK)         │────<│ userId (FK)     │     │ id (PK)         │
+│ email           │     │ id (PK)         │     │ name            │
+│ password        │     │ title           │     │ description     │
+│ name            │     │ problemStatement│     │ createdAt       │
+│ role (ADMIN/    │     │ proposedSolution│     └─────────────────┘
+│      MEMBER)    │     │ description     │            │
+│ isActive        │     │ images (JSON)   │     ┌─────┴─────┐
+│ createdAt       │     │ categoryId (FK) │────>│           │
+│ updatedAt       │     │ status (DRAFT/  │     └───────────┘
+└─────────────────┘     │  PENDING/       │
+        │               │  APPROVED/      │
+        │               │  REJECTED)      │
+        │               │ rejectionFeedback│
+┌───────┴───────┐       │ isPaid (Boolean)│
+│   Comment     │       │ price           │
+├───────────────┤       │ upvoteCount     │
+│ id (PK)       │       │ downvoteCount   │
+│ userId (FK)   │──────<│ viewCount       │
+│ ideaId (FK)   │──────>│ publishedAt     │
+│ parentId (FK) │─┐     │ createdAt       │
+│ content       │ │     │ updatedAt       │
+│ createdAt     │ │     └─────────────────┘
+└───────────────┘ │             │
+        │         │     ┌───────┴───────┐
+        └─────────┘     │     Vote      │
+               (Self    ├───────────────┤
+              Reference)│ id (PK)       │
+                        │ userId (FK)   │──────<
+                        │ ideaId (FK)   │──────>
+                        │ voteType      │
+                        │ (UP/DOWN)     │
+                        │ createdAt     │
+                        └─────────────────┘
+                              │
+┌─────────────────┐           │
+│   Purchase      │           │
+├─────────────────┤     ┌─────┴─────┐
+│ id (PK)         │     │           │
+│ userId (FK)     │─────<     │
+│ ideaId (FK)     │─────>     │
+│ amount          │     └───────────┘
+│ transactionId   │
+│ paymentStatus   │
+│ createdAt       │
+└─────────────────┘
+
+┌─────────────────┐     ┌─────────────────┐
+│   Newsletter    │     │ Notification    │
+├─────────────────┤     ├─────────────────┤
+│ id (PK)         │     │ id (PK)         │
+│ email           │     │ userId (FK)     │
+│ isSubscribed    │     │ type            │
+│ createdAt       │     │ message         │
+└─────────────────┘     │ isRead          │
+                        │ createdAt       │
+                        └─────────────────┘

@@ -1,0 +1,204 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────
+//  Enums
+// ─────────────────────────────────────────────
+
+enum Role {
+  MEMBER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  DEACTIVATED
+}
+
+enum IdeaStatus {
+  DRAFT // member saved but not submitted yet
+  UNDER_REVIEW // submitted, waiting for admin action
+  APPROVED // admin approved → publicly visible
+  REJECTED // admin rejected with feedback
+}
+
+enum PaymentStatus {
+  FREE
+  PAID
+}
+
+enum VoteType {
+  UPVOTE
+  DOWNVOTE
+}
+
+// ─────────────────────────────────────────────
+//  User
+// ─────────────────────────────────────────────
+
+model User {
+  id           String     @id @default(uuid())
+  email        String     @unique
+  name         String
+  password     String
+  profileImage String?
+  role         Role       @default(MEMBER)
+  status       UserStatus @default(ACTIVE)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  // Relations
+  ideas       Idea[]
+  votes       Vote[]
+  comments    Comment[]
+  payments    Payment[]
+  newsletters Newsletter[]
+
+  @@map("users")
+}
+
+// ─────────────────────────────────────────────
+//  Category  (predefined by Admin)
+// ─────────────────────────────────────────────
+
+model Category {
+  id          String   @id @default(uuid())
+  name        String   @unique // e.g. "Energy", "Waste", "Transportation"
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  ideas Idea[]
+
+  @@map("categories")
+}
+
+// ─────────────────────────────────────────────
+//  Idea
+// ─────────────────────────────────────────────
+
+model Idea {
+  id               String        @id @default(uuid())
+  title            String
+  problemStatement String
+  proposedSolution String
+  description      String
+  images           String[] // array of image URLs / paths
+  status           IdeaStatus    @default(DRAFT)
+  paymentStatus    PaymentStatus @default(FREE)
+  price            Float? // only relevant when paymentStatus = PAID
+  adminFeedback    String? // visible only to the submitter on rejection
+  isDeleted        Boolean       @default(false)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  // Foreign keys
+  authorId   String
+  categoryId String
+
+  // Relations
+  author   User      @relation(fields: [authorId], references: [id])
+  category Category  @relation(fields: [categoryId], references: [id])
+  votes    Vote[]
+  comments Comment[]
+  payments Payment[]
+
+  @@map("ideas")
+}
+
+// ─────────────────────────────────────────────
+//  Vote  (one vote per member per idea, Reddit-style)
+// ─────────────────────────────────────────────
+
+model Vote {
+  id        String   @id @default(uuid())
+  type      VoteType
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Foreign keys
+  userId String
+  ideaId String
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+  idea Idea @relation(fields: [ideaId], references: [id])
+
+  // One vote per user per idea
+  @@unique([userId, ideaId])
+  @@map("votes")
+}
+
+// ─────────────────────────────────────────────
+//  Comment  (nested / self-referential, Reddit-style)
+// ─────────────────────────────────────────────
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  isDeleted Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Foreign keys
+  authorId String
+  ideaId   String
+  parentId String? // null → top-level comment; non-null → reply
+
+  // Relations
+  author  User      @relation(fields: [authorId], references: [id])
+  idea    Idea      @relation(fields: [ideaId], references: [id])
+  parent  Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies Comment[] @relation("CommentReplies")
+
+  @@map("comments")
+}
+
+// ─────────────────────────────────────────────
+//  Payment  (members pay to unlock paid ideas)
+// ─────────────────────────────────────────────
+
+model Payment {
+  id            String   @id @default(uuid())
+  amount        Float
+  transactionId String   @unique // from payment gateway
+  status        String   @default("SUCCESS") // SUCCESS | FAILED | PENDING
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Foreign keys
+  userId String
+  ideaId String
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+  idea Idea @relation(fields: [ideaId], references: [id])
+
+  // A user can only pay once per idea
+  @@unique([userId, ideaId])
+  @@map("payments")
+}
+
+// ─────────────────────────────────────────────
+//  Newsletter  (email subscription)
+// ─────────────────────────────────────────────
+
+model Newsletter {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  isActive     Boolean  @default(true)
+  subscribedAt DateTime @default(now())
+
+  // Optional: link to a registered user
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id])
+
+  @@map("newsletters")
+}
