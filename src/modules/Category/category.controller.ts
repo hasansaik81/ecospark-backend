@@ -1,7 +1,9 @@
 import { Request, Response } from 'express';
 import httpStatus from 'http-status';
 import catchAsync from '../../utils/catchAsync';
+import pick from '../../utils/pick';
 import sendResponse from '../../utils/sendResponse';
+import { CategoryFilterableFields } from './category.constant';
 import { CategoryService } from './category.service';
 
 // ─── Create Category ─────────────────────────────────────────────────────────
@@ -16,15 +18,24 @@ const createCategory = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
-// ─── Get All Categories ──────────────────────────────────────────────────────
+// ─── Get All Categories (Search / Filter / Sort / Paginate) ──────────────────
 const getAllCategories = catchAsync(async (req: Request, res: Response) => {
-    const result = await CategoryService.getAllCategories();
+    // Extract whitelisted filter fields + pagination/sort fields
+    const query = req.query as Record<string, string>;
+    const filters = pick(query, ['name', 'search']);
+    const paginationFields = pick(query, ['page', 'limit', 'sortBy', 'sortOrder']);
+
+    const { meta, data } = await CategoryService.getAllCategories({
+        ...filters,
+        ...paginationFields,
+    });
 
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
         message: 'Categories retrieved successfully',
-        data: result,
+        meta,
+        data,
     });
 });
 
