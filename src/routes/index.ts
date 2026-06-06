@@ -6,6 +6,7 @@ import { IdeaRoutes } from "../modules/Idea/idea.route";
 import { VoteRoutes } from "../modules/Vote/vote.route";
 import { CommentRoutes } from "../modules/Comment/comment.route";
 import { PaymentRoutes } from "../modules/Payment/payment.route";
+import { NewsletterRoutes } from "../modules/Newsletter/newsletter.route";
 
 const router = Router();
 
@@ -33,6 +34,10 @@ const routerManger = [
     {
         path: "/payment",
         route: PaymentRoutes,
+    },
+    {
+        path: "/newsletter",
+        route: NewsletterRoutes,
     },
     {
         path: "/",

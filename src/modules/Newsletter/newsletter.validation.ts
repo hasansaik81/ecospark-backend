@@ -1,6 +1,22 @@
-import { MAX_UPLOAD_SIZE } from '../../constants';
-// import { z } from 'zod';
+import { z } from 'zod';
+
+const subscribeSchema = z.object({
+    body: z.object({
+        email: z
+            .string({ message: 'Email must be a valid string' })
+            .email('Email must be valid'),
+    }),
+});
+
+const unsubscribeSchema = z.object({
+    body: z.object({
+        email: z
+            .string({ message: 'Email must be a valid string' })
+            .email('Email must be valid'),
+    }),
+});
 
 export const newsletterValidationSchema = {
-    // Add validation schemas here
-    };
+    subscribe: subscribeSchema,
+    unsubscribe: unsubscribeSchema,
+};

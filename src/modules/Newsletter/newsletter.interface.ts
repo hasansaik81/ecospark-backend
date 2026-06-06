@@ -1,3 +1,10 @@
+export type TNewsletterPayload = {
+    email: string;
+};
+
 export type TNewsletter = {
-    // Add interface properties here
-    };
+    id: string;
+    email: string;
+    isActive: boolean;
+    subscribedAt: Date;
+};

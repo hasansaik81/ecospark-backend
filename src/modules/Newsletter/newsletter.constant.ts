@@ -1,3 +1,1 @@
-export const NewsletterSearchableFields = [
-    // Add searchable fields here
-    ];
+export const NewsletterSearchableFields = ['email'] as const;
