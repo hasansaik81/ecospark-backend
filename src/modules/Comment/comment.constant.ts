@@ -1,0 +1,1 @@
+export const CommentSearchableFields = ['content'] as const;
