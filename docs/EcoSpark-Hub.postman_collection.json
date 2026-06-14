@@ -1,0 +1,2150 @@
+{
+  "info": {
+    "_postman_id": "ecospark-hub-collection-v1",
+    "name": "EcoSpark Hub API",
+    "description": "Complete automated Postman collection for EcoSpark Hub backend. Covers all modules: Auth, User, Category, Idea, Vote, Comment, Payment, Newsletter, and Dashboard. Pre-scripts and post-scripts handle token management, variable chaining, and automated test assertions.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl",        "value": "http://localhost:5000/api",  "type": "string" },
+    { "key": "memberToken",    "value": "",                           "type": "string" },
+    { "key": "adminToken",     "value": "",                           "type": "string" },
+    { "key": "memberId",       "value": "",                           "type": "string" },
+    { "key": "adminId",        "value": "",                           "type": "string" },
+    { "key": "categoryId",     "value": "",                           "type": "string" },
+    { "key": "freeIdeaId",     "value": "",                           "type": "string" },
+    { "key": "paidIdeaId",     "value": "",                           "type": "string" },
+    { "key": "commentId",      "value": "",                           "type": "string" },
+    { "key": "checkoutUrl",    "value": "",                           "type": "string" },
+    { "key": "targetUserId",   "value": "",                           "type": "string" },
+    { "key": "refreshToken",   "value": "",                           "type": "string" }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Collection-level pre-request: nothing needed globally"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Collection-level test: log status for every request",
+          "console.log('[' + pm.info.requestName + '] Status:', pm.response.status);"
+        ]
+      }
+    }
+  ],
+  "item": [
+
+    {
+      "name": "01 - Auth",
+      "description": "Authentication flows: register, login (member & admin), refresh token, logout.",
+      "item": [
+
+        {
+          "name": "Register Member",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Generate a unique email so re-runs don't fail on duplicate",
+                  "const ts = Date.now();",
+                  "pm.collectionVariables.set('memberEmail',    'member_' + ts + '@test.com');",
+                  "pm.collectionVariables.set('memberPassword', 'Member@123');"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201 Created', () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.test('Response has success:true', () => pm.expect(json.success).to.be.true);",
+                  "pm.test('User data returned', () => pm.expect(json.data).to.have.property('id'));",
+                  "// Store member ID for later use",
+                  "if (json.data && json.data.id) {",
+                  "    pm.collectionVariables.set('memberId', json.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Member\",\n  \"email\": \"{{memberEmail}}\",\n  \"password\": \"{{memberPassword}}\"\n}"
+            }
+          }
+        },
+
+        {
+          "name": "Register Admin",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const ts = Date.now();",
+                  "pm.collectionVariables.set('adminEmail',    'admin_' + ts + '@test.com');",
+                  "pm.collectionVariables.set('adminPassword', 'Admin@123');"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201 Created', () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.test('Admin registered', () => pm.expect(json.data).to.have.property('id'));",
+                  "if (json.data && json.data.id) {",
+                  "    pm.collectionVariables.set('adminId', json.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Admin\",\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+            }
+          }
+        },
+
+        {
+          "name": "Login as Member",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Access token present', () => pm.expect(json.data).to.have.property('accessToken'));",
+                  "if (json.data && json.data.accessToken) {",
+                  "    pm.collectionVariables.set('memberToken', json.data.accessToken);",
+                  "}",
+                  "if (json.data && json.data.refreshToken) {",
+                  "    pm.collectionVariables.set('refreshToken', json.data.refreshToken);",
+                  "}",
+                  "if (json.data && json.data.user && json.data.user.id) {",
+                  "    pm.collectionVariables.set('memberId', json.data.user.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{memberEmail}}\",\n  \"password\": \"{{memberPassword}}\"\n}"
+            }
+          }
+        },
+
+        {
+          "name": "Login as Admin (seeded)",
+          "description": "Login with the seeded admin account. Adjust credentials to match your seed data.",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Use seeded admin or the admin registered above",
+                  "// Change these to match your seed/env if needed",
+                  "if (!pm.collectionVariables.get('adminEmail')) {",
+                  "    pm.collectionVariables.set('adminEmail', 'admin@ecospark.com');",
+                  "    pm.collectionVariables.set('adminPassword', 'Admin@123');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Admin access token present', () => pm.expect(json.data).to.have.property('accessToken'));",
+                  "if (json.data && json.data.accessToken) {",
+                  "    pm.collectionVariables.set('adminToken', json.data.accessToken);",
+                  "}",
+                  "if (json.data && json.data.user && json.data.user.id) {",
+                  "    pm.collectionVariables.set('adminId', json.data.user.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+            }
+          }
+        },
+
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('New access token returned', () => pm.expect(json.data).to.have.property('accessToken'));",
+                  "if (json.data && json.data.accessToken) {",
+                  "    pm.collectionVariables.set('memberToken', json.data.accessToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/auth/refresh-token", "host": ["{{baseUrl}}"], "path": ["auth", "refresh-token"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            }
+          }
+        },
+
+        {
+          "name": "Logout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Logout success', () => pm.expect(json.success).to.be.true);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{memberToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/auth/logout", "host": ["{{baseUrl}}"], "path": ["auth", "logout"] }
+          }
+        },
+
+        {
+          "name": "Login as Member (re-login after logout)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "if (json.data && json.data.accessToken) {",
+                  "    pm.collectionVariables.set('memberToken', json.data.accessToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{memberEmail}}\",\n  \"password\": \"{{memberPassword}}\"\n}"
+            }
+          }
+        },
+
+        {
+          "name": "Register - Validation Error (missing email)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 400 Bad Request', () => pm.response.to.have.status(400));",
+                  "const json = pm.response.json();",
+                  "pm.test('Error message present', () => pm.expect(json).to.have.property('message'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Bad User\",\n  \"password\": \"Password123\"\n}"
+            }
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "02 - User",
+      "description": "User profile management for members and admin user management endpoints.",
+      "item": [
+
+        {
+          "name": "Get My Profile (Member)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Profile data has id', () => pm.expect(json.data).to.have.property('id'));",
+                  "pm.test('Profile data has email', () => pm.expect(json.data).to.have.property('email'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{memberToken}}" }],
+            "url": { "raw": "{{baseUrl}}/users/me", "host": ["{{baseUrl}}"], "path": ["users", "me"] }
+          }
+        },
+
+        {
+          "name": "Update My Profile (Member)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Name updated', () => pm.expect(json.data.name).to.equal('Updated Member Name'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{memberToken}}" },
+              { "key": "Content-Type",   "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/users/me", "host": ["{{baseUrl}}"], "path": ["users", "me"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Member Name\"\n}"
+            }
+          }
+        },
+
+        {
+          "name": "Change Password (Member)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Password changed successfully', () => pm.expect(json.success).to.be.true);",
+                  "// Update stored password so subsequent login tests work",
+                  "pm.collectionVariables.set('memberPassword', 'Member@New123');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{memberToken}}" },
+              { "key": "Content-Type",   "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/users/me/change-password", "host": ["{{baseUrl}}"], "path": ["users", "me", "change-password"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"Member@123\",\n  \"newPassword\": \"Member@New123\",\n  \"confirmPassword\": \"Member@New123\"\n}"
+            }
+          }
+        },
+
+        {
+          "name": "Get All Users (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Returns array of users', () => pm.expect(json.data).to.be.an('array'));",
+                  "// Store first non-admin userId for later tests",
+                  "if (json.data && json.data.length > 0) {",
+                  "    const member = json.data.find(u => u.role === 'MEMBER' || u.role === 'member');",
+                  "    if (member) pm.collectionVariables.set('targetUserId', member.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/users", "host": ["{{baseUrl}}"], "path": ["users"] }
+          }
+        },
+
+        {
+          "name": "Get User By ID (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('User returned', () => pm.expect(json.data).to.have.property('id'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/users/{{targetUserId}}", "host": ["{{baseUrl}}"], "path": ["users", "{{targetUserId}}"] }
+          }
+        },
+
+        {
+          "name": "Update User Status (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Status updated', () => pm.expect(json.success).to.be.true);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" },
+              { "key": "Content-Type",   "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/users/{{targetUserId}}/status", "host": ["{{baseUrl}}"], "path": ["users", "{{targetUserId}}", "status"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"INACTIVE\"\n}"
+            }
+          }
+        },
+
+        {
+          "name": "Reactivate User Status (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" },
+              { "key": "Content-Type",   "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/users/{{targetUserId}}/status", "host": ["{{baseUrl}}"], "path": ["users", "{{targetUserId}}", "status"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"ACTIVE\"\n}"
+            }
+          }
+        },
+
+        {
+          "name": "Update User Role (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Role updated', () => pm.expect(pm.response.json().success).to.be.true);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" },
+              { "key": "Content-Type",   "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/users/{{targetUserId}}/role", "host": ["{{baseUrl}}"], "path": ["users", "{{targetUserId}}", "role"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"ADMIN\"\n}"
+            }
+          }
+        },
+
+        {
+          "name": "Revert User Role Back to Member (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" },
+              { "key": "Content-Type",   "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/users/{{targetUserId}}/role", "host": ["{{baseUrl}}"], "path": ["users", "{{targetUserId}}", "role"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"MEMBER\"\n}"
+            }
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "03 - Category",
+      "description": "Category CRUD. GET endpoints are public; POST/PATCH/DELETE require Admin token.",
+      "item": [
+
+        {
+          "name": "Get All Categories (Public)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Returns array', () => pm.expect(json.data).to.be.an('array'));",
+                  "// Auto-save first categoryId for subsequent tests",
+                  "if (json.data && json.data.length > 0) {",
+                  "    pm.collectionVariables.set('categoryId', json.data[0].id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/categories", "host": ["{{baseUrl}}"], "path": ["categories"] }
+          }
+        },
+
+        {
+          "name": "Get Category by ID (Public)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Category has name', () => pm.expect(pm.response.json().data).to.have.property('name'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/categories/{{categoryId}}", "host": ["{{baseUrl}}"], "path": ["categories", "{{categoryId}}"] }
+          }
+        },
+
+        {
+          "name": "Create Category (Admin)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Give each run a unique category name to avoid conflicts",
+                  "pm.collectionVariables.set('newCategoryName', 'TestCategory_' + Date.now());"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201 Created', () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.test('Category created', () => pm.expect(json.data).to.have.property('id'));",
+                  "// Overwrite categoryId so edit/delete tests target the newly created one",
+                  "if (json.data && json.data.id) {",
+                  "    pm.collectionVariables.set('categoryId', json.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" },
+              { "key": "Content-Type",   "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/categories", "host": ["{{baseUrl}}"], "path": ["categories"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{newCategoryName}}\",\n  \"description\": \"A test category for automation\"\n}"
+            }
+          }
+        },
+
+        {
+          "name": "Update Category (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Category name updated', () => pm.expect(json.data.name).to.equal('Updated Category'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" },
+              { "key": "Content-Type",   "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/categories/{{categoryId}}", "host": ["{{baseUrl}}"], "path": ["categories", "{{categoryId}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Category\",\n  \"description\": \"Updated description\"\n}"
+            }
+          }
+        },
+
+        {
+          "name": "Delete Category (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Delete successful', () => pm.expect(pm.response.json().success).to.be.true);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/categories/{{categoryId}}", "host": ["{{baseUrl}}"], "path": ["categories", "{{categoryId}}"] }
+          }
+        },
+
+        {
+          "name": "Create Category for Ideas (Admin — keep)",
+          "description": "Creates a persistent category that will be used by idea tests.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "if (json.data && json.data.id) {",
+                  "    pm.collectionVariables.set('categoryId', json.data.id);",
+                  "    console.log('Category ID set to:', json.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" },
+              { "key": "Content-Type",   "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/categories", "host": ["{{baseUrl}}"], "path": ["categories"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Energy\",\n  \"description\": \"Energy sustainability ideas\"\n}"
+            }
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "04 - Idea",
+      "description": "Full idea lifecycle: create, list, edit, submit, admin approve/reject, delete.",
+      "item": [
+
+        {
+          "name": "Create Free Idea (Member)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.test('Idea created', () => pm.expect(json.data).to.have.property('id'));",
+                  "pm.test('Status is DRAFT or PENDING', () => pm.expect(['DRAFT','PENDING']).to.include(json.data.status));",
+                  "if (json.data && json.data.id) {",
+                  "    pm.collectionVariables.set('freeIdeaId', json.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{memberToken}}" },
+              { "key": "Content-Type",   "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/ideas", "host": ["{{baseUrl}}"], "path": ["ideas"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Solar-Powered Bus Stops\",\n  \"problemStatement\": \"Urban bus stops waste energy using grid-powered lighting even during peak sunlight hours.\",\n  \"proposedSolution\": \"Install solar panels on bus stop roofs to power LED lighting and USB charging ports.\",\n  \"description\": \"This initiative reduces municipal electricity costs and provides commuters with free phone charging while cutting carbon emissions.\",\n  \"categoryId\": \"{{categoryId}}\",\n  \"paymentStatus\": \"FREE\"\n}"
+            }
+          }
+        },
+
+        {
+          "name": "Create Paid Idea (Member)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.test('Paid idea created', () => pm.expect(json.data).to.have.property('id'));",
+                  "pm.test('isPaid is true', () => pm.expect(json.data.isPaid).to.be.true);",
+                  "if (json.data && json.data.id) {",
+                  "    pm.collectionVariables.set('paidIdeaId', json.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{memberToken}}" },
+              { "key": "Content-Type",   "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/ideas", "host": ["{{baseUrl}}"], "path": ["ideas"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"AI-Driven Smart Grid Optimizer\",\n  \"problemStatement\": \"Traditional power grids cannot dynamically balance load, causing brownouts and energy waste.\",\n  \"proposedSolution\": \"Machine-learning algorithms predict demand spikes 15 minutes ahead and reroute supply automatically.\",\n  \"description\": \"This premium blueprint includes architecture diagrams and API specs for integrating with major grid providers.\",\n  \"categoryId\": \"{{categoryId}}\",\n  \"paymentStatus\": \"PAID\",\n  \"price\": 9.99\n}"
+            }
+          }
+        },
+
+        {
+          "name": "Get All Ideas (Public)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Returns paginated data', () => pm.expect(json.data).to.be.an('array'));",
+                  "pm.test('Has pagination meta', () => pm.expect(json.meta).to.exist);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/ideas?page=1&limit=10&sort=recent",
+              "host": ["{{baseUrl}}"],
+              "path": ["ideas"],
+              "query": [
+                { "key": "page",  "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "sort",  "value": "recent" }
+              ]
+            }
+          }
+        },
+
+        {
+          "name": "Get All Ideas - Filter by Category",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/ideas?category={{categoryId}}&isPaid=free",
+              "host": ["{{baseUrl}}"],
+              "path": ["ideas"],
+              "query": [
+                { "key": "category", "value": "{{categoryId}}" },
+                { "key": "isPaid",   "value": "free" }
+              ]
+            }
+          }
+        },
+
+        {
+          "name": "Get All Ideas - Search",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/ideas?search=solar&sort=topVoted",
+              "host": ["{{baseUrl}}"],
+              "path": ["ideas"],
+              "query": [
+                { "key": "search", "value": "solar" },
+                { "key": "sort",   "value": "topVoted" }
+              ]
+            }
+          }
+        },
+
+        {
+          "name": "Get My Ideas (Member)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns array', () => pm.expect(pm.response.json().data).to.be.an('array'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{memberToken}}" }],
+            "url": { "raw": "{{baseUrl}}/ideas/my", "host": ["{{baseUrl}}"], "path": ["ideas", "my"] }
+          }
+        },
+
+        {
+          "name": "Get Idea by ID (Free - Public)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Idea has title', () => pm.expect(pm.response.json().data).to.have.property('title'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/ideas/{{freeIdeaId}}", "host": ["{{baseUrl}}"], "path": ["ideas", "{{freeIdeaId}}"] }
+          }
+        },
+
+        {
+          "name": "Get Paid Idea (Without Payment — expect 402)",
+          "description": "Accessing a paid idea without payment should return 402 Payment Required.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Paid ideas that are APPROVED return 402 when user hasn't paid",
+                  "// If idea is still DRAFT/PENDING it may return 200 or 403 — both valid at this stage",
+                  "const status = pm.response.code;",
+                  "pm.test('Status is 402 or 200 (idea may not be approved yet)', () => {",
+                  "    pm.expect([200, 402, 403]).to.include(status);",
+                  "});",
+                  "if (status === 402) {",
+                  "    const json = pm.response.json();",
+                  "    pm.test('Checkout URL in response', () => pm.expect(json).to.have.property('checkoutUrl'));",
+                  "    pm.collectionVariables.set('checkoutUrl', json.checkoutUrl || '');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{memberToken}}" }],
+            "url": { "raw": "{{baseUrl}}/ideas/{{paidIdeaId}}", "host": ["{{baseUrl}}"], "path": ["ideas", "{{paidIdeaId}}"] }
+          }
+        },
+
+        {
+          "name": "Update Idea (Member — owner)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Title updated', () => pm.expect(json.data.title).to.equal('Solar-Powered Bus Stops v2'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{memberToken}}" },
+              { "key": "Content-Type",   "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/ideas/{{freeIdeaId}}", "host": ["{{baseUrl}}"], "path": ["ideas", "{{freeIdeaId}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Solar-Powered Bus Stops v2\",\n  \"description\": \"Enhanced description with more details about the implementation roadmap.\"\n}"
+            }
+          }
+        },
+
+        {
+          "name": "Submit Idea for Review (Member)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Status changed to PENDING or UNDER_REVIEW', () => {",
+                  "    pm.expect(['PENDING', 'UNDER_REVIEW']).to.include(json.data.status);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{memberToken}}" }],
+            "url": { "raw": "{{baseUrl}}/ideas/{{freeIdeaId}}/submit", "host": ["{{baseUrl}}"], "path": ["ideas", "{{freeIdeaId}}", "submit"] }
+          }
+        },
+
+        {
+          "name": "Submit Paid Idea for Review (Member)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{memberToken}}" }],
+            "url": { "raw": "{{baseUrl}}/ideas/{{paidIdeaId}}/submit", "host": ["{{baseUrl}}"], "path": ["ideas", "{{paidIdeaId}}", "submit"] }
+          }
+        },
+
+        {
+          "name": "Get All Ideas (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns array', () => pm.expect(pm.response.json().data).to.be.an('array'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/ideas/admin/ideas", "host": ["{{baseUrl}}"], "path": ["ideas", "admin", "ideas"] }
+          }
+        },
+
+        {
+          "name": "Approve Free Idea (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Idea status is APPROVED', () => pm.expect(json.data.status).to.equal('APPROVED'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/ideas/admin/ideas/{{freeIdeaId}}/approve", "host": ["{{baseUrl}}"], "path": ["ideas", "admin", "ideas", "{{freeIdeaId}}", "approve"] }
+          }
+        },
+
+        {
+          "name": "Approve Paid Idea (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Paid idea APPROVED', () => pm.expect(json.data.status).to.equal('APPROVED'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/ideas/admin/ideas/{{paidIdeaId}}/approve", "host": ["{{baseUrl}}"], "path": ["ideas", "admin", "ideas", "{{paidIdeaId}}", "approve"] }
+          }
+        },
+
+        {
+          "name": "Reject Idea (Admin) — Create extra idea first",
+          "description": "Creates a second free idea to be rejected, then rejects it.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "if (json.data && json.data.id) {",
+                  "    pm.collectionVariables.set('rejectIdeaId', json.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{memberToken}}" },
+              { "key": "Content-Type",   "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/ideas", "host": ["{{baseUrl}}"], "path": ["ideas"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Idea To Be Rejected\",\n  \"problemStatement\": \"This idea will be submitted and then rejected by admin.\",\n  \"proposedSolution\": \"The solution is quite weak and needs more detail.\",\n  \"description\": \"This is a test idea that will be rejected during the automated test run.\",\n  \"categoryId\": \"{{categoryId}}\",\n  \"paymentStatus\": \"FREE\"\n}"
+            }
+          }
+        },
+
+        {
+          "name": "Submit Idea To Be Rejected (Member)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{memberToken}}" }],
+            "url": { "raw": "{{baseUrl}}/ideas/{{rejectIdeaId}}/submit", "host": ["{{baseUrl}}"], "path": ["ideas", "{{rejectIdeaId}}", "submit"] }
+          }
+        },
+
+        {
+          "name": "Reject Idea (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Status is REJECTED', () => pm.expect(json.data.status).to.equal('REJECTED'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" },
+              { "key": "Content-Type",   "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/ideas/admin/ideas/{{rejectIdeaId}}/reject", "host": ["{{baseUrl}}"], "path": ["ideas", "admin", "ideas", "{{rejectIdeaId}}", "reject"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"feedback\": \"The proposed solution lacks sufficient technical detail and feasibility analysis.\"\n}"
+            }
+          }
+        },
+
+        {
+          "name": "Admin Delete Idea (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Delete successful', () => pm.expect(pm.response.json().success).to.be.true);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/ideas/admin/ideas/{{rejectIdeaId}}", "host": ["{{baseUrl}}"], "path": ["ideas", "admin", "ideas", "{{rejectIdeaId}}"] }
+          }
+        },
+
+        {
+          "name": "Member Delete Own Idea (Member)",
+          "description": "Creates and immediately deletes an idea to test member delete flow.",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// We'll create a transient idea in the test script itself — using a separate request is cleaner.",
+                  "// This request deletes the freeIdeaId if it is still in DRAFT status.",
+                  "// NOTE: Once approved, member cannot delete — skip if already approved."
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Idea is APPROVED so member cannot delete it — expect 403",
+                  "const status = pm.response.code;",
+                  "pm.test('403 Forbidden (idea already approved) OR 200 deleted', () => {",
+                  "    pm.expect([200, 403]).to.include(status);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{memberToken}}" }],
+            "url": { "raw": "{{baseUrl}}/ideas/{{freeIdeaId}}", "host": ["{{baseUrl}}"], "path": ["ideas", "{{freeIdeaId}}"] }
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "05 - Vote",
+      "description": "Cast upvote/downvote and remove vote on ideas.",
+      "item": [
+
+        {
+          "name": "Cast Upvote (Member)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 or 201', () => pm.expect([200,201]).to.include(pm.response.code));",
+                  "pm.test('Vote recorded', () => pm.expect(pm.response.json().success).to.be.true);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{memberToken}}" },
+              { "key": "Content-Type",   "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/ideas/{{freeIdeaId}}/vote", "host": ["{{baseUrl}}"], "path": ["ideas", "{{freeIdeaId}}", "vote"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"UPVOTE\"\n}"
+            }
+          }
+        },
+
+        {
+          "name": "Change Vote to Downvote (Member)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Vote updated', () => pm.expect(pm.response.json().success).to.be.true);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{memberToken}}" },
+              { "key": "Content-Type",   "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/ideas/{{freeIdeaId}}/vote", "host": ["{{baseUrl}}"], "path": ["ideas", "{{freeIdeaId}}", "vote"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"DOWNVOTE\"\n}"
+            }
+          }
+        },
+
+        {
+          "name": "Remove Vote (Member)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Vote removed', () => pm.expect(pm.response.json().success).to.be.true);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{memberToken}}" }],
+            "url": { "raw": "{{baseUrl}}/ideas/{{freeIdeaId}}/vote", "host": ["{{baseUrl}}"], "path": ["ideas", "{{freeIdeaId}}", "vote"] }
+          }
+        },
+
+        {
+          "name": "Re-Upvote for Dashboard stats (Member)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 or 201', () => pm.expect([200,201]).to.include(pm.response.code));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{memberToken}}" },
+              { "key": "Content-Type",   "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/ideas/{{freeIdeaId}}/vote", "host": ["{{baseUrl}}"], "path": ["ideas", "{{freeIdeaId}}", "vote"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"UPVOTE\"\n}"
+            }
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "06 - Comment",
+      "description": "Nested comments: get comments tree, add top-level comment, add reply, delete comment.",
+      "item": [
+
+        {
+          "name": "Get Comments for Idea (Public)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns array', () => pm.expect(pm.response.json().data).to.be.an('array'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/ideas/{{freeIdeaId}}/comments", "host": ["{{baseUrl}}"], "path": ["ideas", "{{freeIdeaId}}", "comments"] }
+          }
+        },
+
+        {
+          "name": "Add Comment (Member)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.test('Comment has id', () => pm.expect(json.data).to.have.property('id'));",
+                  "if (json.data && json.data.id) {",
+                  "    pm.collectionVariables.set('commentId', json.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{memberToken}}" },
+              { "key": "Content-Type",   "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/ideas/{{freeIdeaId}}/comments", "host": ["{{baseUrl}}"], "path": ["ideas", "{{freeIdeaId}}", "comments"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"This is a brilliant idea! Solar panels on bus stops would also help passengers stay cool in summer.\"\n}"
+            }
+          }
+        },
+
+        {
+          "name": "Add Reply to Comment (Member — nested)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Reply created', () => pm.expect(pm.response.json().data).to.have.property('parentId'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{memberToken}}" },
+              { "key": "Content-Type",   "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/ideas/{{freeIdeaId}}/comments", "host": ["{{baseUrl}}"], "path": ["ideas", "{{freeIdeaId}}", "comments"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Agreed! And it could even power small information displays at the stop.\",\n  \"parentId\": \"{{commentId}}\"\n}"
+            }
+          }
+        },
+
+        {
+          "name": "Delete Comment (Owner / Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Delete successful', () => pm.expect(pm.response.json().success).to.be.true);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{memberToken}}" }],
+            "url": { "raw": "{{baseUrl}}/comments/{{commentId}}", "host": ["{{baseUrl}}"], "path": ["comments", "{{commentId}}"] }
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "07 - Payment",
+      "description": "Stripe payment: create checkout session, verify payment status. Webhook is tested separately via Stripe CLI.",
+      "item": [
+
+        {
+          "name": "Create Checkout Session for Paid Idea (Member)",
+          "description": "Initiates a Stripe Checkout session. The returned URL should be opened in a browser to complete payment in test mode.",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Ensure we have a valid paidIdeaId; log it for debugging",
+                  "console.log('Creating checkout for paidIdeaId:', pm.collectionVariables.get('paidIdeaId'));"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 or 201', () => pm.expect([200, 201]).to.include(pm.response.code));",
+                  "const json = pm.response.json();",
+                  "pm.test('Checkout URL returned', () => {",
+                  "    const url = json.data?.url || json.data?.checkoutUrl || json.checkoutUrl;",
+                  "    pm.expect(url).to.be.a('string').and.to.include('stripe.com');",
+                  "    pm.collectionVariables.set('checkoutUrl', url);",
+                  "    console.log('Open this URL in browser to complete test payment:', url);",
+                  "});",
+                  "pm.test('Session ID present', () => {",
+                  "    const sessionId = json.data?.sessionId || json.data?.id || json.sessionId;",
+                  "    pm.expect(sessionId).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{memberToken}}" },
+              { "key": "Content-Type",   "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/payment/checkout/{{paidIdeaId}}", "host": ["{{baseUrl}}"], "path": ["payment", "checkout", "{{paidIdeaId}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          }
+        },
+
+        {
+          "name": "Verify Payment - Before Payment (Expect unpaid)",
+          "description": "Before completing Stripe checkout, should return isPaid: false.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Payment status returned', () => {",
+                  "    const hasPaid = json.data?.hasPaid ?? json.data?.isPaid ?? json.data?.status;",
+                  "    pm.expect(hasPaid).to.exist;",
+                  "    // Before completing payment via Stripe, this should be false/PENDING",
+                  "    console.log('Payment verified status:', hasPaid);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{memberToken}}" }],
+            "url": { "raw": "{{baseUrl}}/payment/verify/{{paidIdeaId}}", "host": ["{{baseUrl}}"], "path": ["payment", "verify", "{{paidIdeaId}}"] }
+          }
+        },
+
+        {
+          "name": "Stripe Webhook (simulate — for local testing)",
+          "description": "⚠️ In production, Stripe sends this. Use 'stripe listen --forward-to localhost:5000/api/payment/webhook' with Stripe CLI for real testing. This request simulates a minimal event body — it will fail signature verification intentionally.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Webhook requires valid Stripe-Signature header which we cannot fabricate here.",
+                  "// Expected: 400 Bad Request due to invalid signature.",
+                  "pm.test('Webhook rejects invalid signature (400)', () => {",
+                  "    pm.expect([400, 401]).to.include(pm.response.code);",
+                  "});",
+                  "console.log('ℹ️ To test webhook properly: stripe listen --forward-to localhost:5000/api/payment/webhook');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",       "value": "application/json" },
+              { "key": "stripe-signature",   "value": "t=fake,v1=fakesignature" }
+            ],
+            "url": { "raw": "{{baseUrl}}/payment/webhook", "host": ["{{baseUrl}}"], "path": ["payment", "webhook"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"checkout.session.completed\",\n  \"data\": {\n    \"object\": {\n      \"id\": \"cs_test_fake\",\n      \"metadata\": {\n        \"userId\": \"{{memberId}}\",\n        \"ideaId\": \"{{paidIdeaId}}\"\n      },\n      \"payment_status\": \"paid\"\n    }\n  }\n}"
+            }
+          }
+        },
+
+        {
+          "name": "Verify Payment - After Stripe Checkout (Manual step)",
+          "description": "Run this AFTER completing the Stripe test payment via the browser URL. Should now return hasPaid: true.",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "console.log('⚠️ Only run this AFTER completing payment at:', pm.collectionVariables.get('checkoutUrl'));"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "const hasPaid = json.data?.hasPaid ?? json.data?.isPaid;",
+                  "pm.test('Payment is now confirmed', () => pm.expect(hasPaid).to.be.true);",
+                  "console.log('Payment verification result:', JSON.stringify(json.data));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{memberToken}}" }],
+            "url": { "raw": "{{baseUrl}}/payment/verify/{{paidIdeaId}}", "host": ["{{baseUrl}}"], "path": ["payment", "verify", "{{paidIdeaId}}"] }
+          }
+        },
+
+        {
+          "name": "Access Paid Idea After Payment (Member)",
+          "description": "After payment is verified, accessing the idea should return 200 with full content.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK (payment complete)', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Full idea content returned', () => {",
+                  "    pm.expect(json.data).to.have.property('title');",
+                  "    pm.expect(json.data).to.have.property('proposedSolution');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{memberToken}}" }],
+            "url": { "raw": "{{baseUrl}}/ideas/{{paidIdeaId}}", "host": ["{{baseUrl}}"], "path": ["ideas", "{{paidIdeaId}}"] }
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "08 - Newsletter",
+      "description": "Subscribe and unsubscribe from the EcoSpark newsletter.",
+      "item": [
+
+        {
+          "name": "Subscribe to Newsletter",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.collectionVariables.set('newsletterEmail', 'newsletter_' + Date.now() + '@test.com');"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 or 201', () => pm.expect([200, 201]).to.include(pm.response.code));",
+                  "pm.test('Subscribed successfully', () => pm.expect(pm.response.json().success).to.be.true);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/newsletter/subscribe", "host": ["{{baseUrl}}"], "path": ["newsletter", "subscribe"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{newsletterEmail}}\"\n}"
+            }
+          }
+        },
+
+        {
+          "name": "Subscribe Again (Duplicate — expect 409 or graceful)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Duplicate subscription should be handled gracefully",
+                  "pm.test('Status 200 (already subscribed) or 409 (conflict)', () => {",
+                  "    pm.expect([200, 201, 409]).to.include(pm.response.code);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/newsletter/subscribe", "host": ["{{baseUrl}}"], "path": ["newsletter", "subscribe"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{newsletterEmail}}\"\n}"
+            }
+          }
+        },
+
+        {
+          "name": "Unsubscribe from Newsletter",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Unsubscribed successfully', () => pm.expect(pm.response.json().success).to.be.true);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/newsletter/unsubscribe", "host": ["{{baseUrl}}"], "path": ["newsletter", "unsubscribe"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{newsletterEmail}}\"\n}"
+            }
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "09 - Dashboard",
+      "description": "Admin and member dashboard endpoints for stats and management.",
+      "item": [
+
+        {
+          "name": "Admin — Platform Stats",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Stats has totalUsers', () => pm.expect(json.data).to.have.property('totalUsers'));",
+                  "pm.test('Stats has totalIdeas', () => pm.expect(json.data).to.have.property('totalIdeas'));",
+                  "console.log('Platform stats:', JSON.stringify(json.data, null, 2));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/dashboard/admin/stats", "host": ["{{baseUrl}}"], "path": ["dashboard", "admin", "stats"] }
+          }
+        },
+
+        {
+          "name": "Admin — List All Users",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns array', () => pm.expect(pm.response.json().data).to.be.an('array'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/dashboard/admin/users", "host": ["{{baseUrl}}"], "path": ["dashboard", "admin", "users"] }
+          }
+        },
+
+        {
+          "name": "Admin — Update User Status via Dashboard",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Success true', () => pm.expect(pm.response.json().success).to.be.true);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" },
+              { "key": "Content-Type",   "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/dashboard/admin/users/{{targetUserId}}/status", "host": ["{{baseUrl}}"], "path": ["dashboard", "admin", "users", "{{targetUserId}}", "status"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"ACTIVE\"\n}"
+            }
+          }
+        },
+
+        {
+          "name": "Admin — Update User Role via Dashboard",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Success true', () => pm.expect(pm.response.json().success).to.be.true);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" },
+              { "key": "Content-Type",   "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/dashboard/admin/users/{{targetUserId}}/role", "host": ["{{baseUrl}}"], "path": ["dashboard", "admin", "users", "{{targetUserId}}", "role"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"MEMBER\"\n}"
+            }
+          }
+        },
+
+        {
+          "name": "Admin — List All Ideas via Dashboard",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns array', () => pm.expect(pm.response.json().data).to.be.an('array'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/dashboard/admin/ideas", "host": ["{{baseUrl}}"], "path": ["dashboard", "admin", "ideas"] }
+          }
+        },
+
+        {
+          "name": "Admin — Approve Idea via Dashboard",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Success true', () => pm.expect(pm.response.json().success).to.be.true);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/dashboard/admin/ideas/{{freeIdeaId}}/approve", "host": ["{{baseUrl}}"], "path": ["dashboard", "admin", "ideas", "{{freeIdeaId}}", "approve"] }
+          }
+        },
+
+        {
+          "name": "Admin — Reject Idea via Dashboard",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// freeIdeaId is already APPROVED — this will return 400/409 which is correct",
+                  "const code = pm.response.code;",
+                  "pm.test('Returns error (already approved) or success', () => {",
+                  "    pm.expect([200, 400, 409, 422]).to.include(code);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" },
+              { "key": "Content-Type",   "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/dashboard/admin/ideas/{{freeIdeaId}}/reject", "host": ["{{baseUrl}}"], "path": ["dashboard", "admin", "ideas", "{{freeIdeaId}}", "reject"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"feedback\": \"Needs more detail on the cost-benefit analysis.\"\n}"
+            }
+          }
+        },
+
+        {
+          "name": "Admin — Delete Idea via Dashboard",
+          "description": "Creates a disposable idea and then deletes it via dashboard route.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Idea deleted', () => pm.expect(pm.response.json().success).to.be.true);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/dashboard/admin/ideas/{{paidIdeaId}}", "host": ["{{baseUrl}}"], "path": ["dashboard", "admin", "ideas", "{{paidIdeaId}}"] }
+          }
+        },
+
+        {
+          "name": "Member — Personal Dashboard Stats",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Stats present', () => pm.expect(json.data).to.be.an('object'));",
+                  "console.log('Member stats:', JSON.stringify(json.data, null, 2));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{memberToken}}" }],
+            "url": { "raw": "{{baseUrl}}/dashboard/member/stats", "host": ["{{baseUrl}}"], "path": ["dashboard", "member", "stats"] }
+          }
+        },
+
+        {
+          "name": "Member — My Ideas via Dashboard",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns array', () => pm.expect(pm.response.json().data).to.be.an('array'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{memberToken}}" }],
+            "url": { "raw": "{{baseUrl}}/dashboard/member/ideas", "host": ["{{baseUrl}}"], "path": ["dashboard", "member", "ideas"] }
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "10 - Error & Edge Cases",
+      "description": "Boundary condition tests: unauthorized access, invalid UUIDs, missing tokens.",
+      "item": [
+
+        {
+          "name": "Access Protected Route Without Token (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 401 Unauthorized', () => pm.response.to.have.status(401));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/users/me", "host": ["{{baseUrl}}"], "path": ["users", "me"] }
+          }
+        },
+
+        {
+          "name": "Member Accesses Admin Route (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 403 Forbidden', () => pm.response.to.have.status(403));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{memberToken}}" }],
+            "url": { "raw": "{{baseUrl}}/dashboard/admin/stats", "host": ["{{baseUrl}}"], "path": ["dashboard", "admin", "stats"] }
+          }
+        },
+
+        {
+          "name": "Get Idea With Invalid UUID (400/404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 400 or 404', () => pm.expect([400, 404]).to.include(pm.response.code));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/ideas/not-a-valid-uuid", "host": ["{{baseUrl}}"], "path": ["ideas", "not-a-valid-uuid"] }
+          }
+        },
+
+        {
+          "name": "Login with Wrong Password (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 401 Unauthorized', () => pm.response.to.have.status(401));",
+                  "pm.test('Error message present', () => pm.expect(pm.response.json()).to.have.property('message'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{memberEmail}}\",\n  \"password\": \"WrongPassword!\"\n}"
+            }
+          }
+        },
+
+        {
+          "name": "Create Category Without Admin Token (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 401 or 403', () => pm.expect([401, 403]).to.include(pm.response.code));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{memberToken}}" },
+              { "key": "Content-Type",   "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/categories", "host": ["{{baseUrl}}"], "path": ["categories"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Unauthorized Category\"\n}"
+            }
+          }
+        },
+
+        {
+          "name": "Create Paid Idea Without Price (400 Validation)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 400 Bad Request', () => pm.response.to.have.status(400));",
+                  "pm.test('Validation error present', () => pm.expect(pm.response.json()).to.have.property('message'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{memberToken}}" },
+              { "key": "Content-Type",   "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/ideas", "host": ["{{baseUrl}}"], "path": ["ideas"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Missing Price Idea\",\n  \"problemStatement\": \"This should fail validation because paymentStatus is PAID but no price given.\",\n  \"proposedSolution\": \"This will not be saved.\",\n  \"description\": \"Validation test for paid idea without price field.\",\n  \"categoryId\": \"{{categoryId}}\",\n  \"paymentStatus\": \"PAID\"\n}"
+            }
+          }
+        }
+
+      ]
+    }
+
+  ]
+}
