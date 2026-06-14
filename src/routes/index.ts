@@ -7,6 +7,7 @@ import { VoteRoutes } from "../modules/Vote/vote.route";
 import { CommentRoutes } from "../modules/Comment/comment.route";
 import { PaymentRoutes } from "../modules/Payment/payment.route";
 import { NewsletterRoutes } from "../modules/Newsletter/newsletter.route";
+import { DashboardRoutes } from "../modules/Dashboard/dashboard.route";
 
 const router = Router();
 
@@ -42,6 +43,10 @@ const routerManger = [
     {
         path: "/",
         route: CommentRoutes,
+    },
+    {
+        path: "/dashboard",
+        route: DashboardRoutes,
     },
 ];
 
