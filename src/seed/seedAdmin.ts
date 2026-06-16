@@ -25,7 +25,7 @@ async function main() {
             email: adminEmail,
             password: hashedPassword,
             role: 'ADMIN',
-            img: 'https://i.ibb.co/4pDNDk1/avatar.png', // default profile image
+            profileImage: 'https://i.ibb.co/4pDNDk1/avatar.png', // default profile image
         },
     });
 

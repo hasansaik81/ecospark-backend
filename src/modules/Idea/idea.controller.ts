@@ -6,6 +6,7 @@ import pick from '../../utils/pick';
 import sendResponse from '../../utils/sendResponse';
 import config from '../../config';
 import { IdeaService } from './idea.service';
+import { TIdeaQuery } from './idea.interface';
 
 const parseUserFromAuthHeader = (req: Request) => {
     const authHeader = req.headers.authorization;
@@ -43,7 +44,7 @@ const getAllIdeas = catchAsync(async (req: Request, res: Response) => {
         'isPaid',
         'search',
         'minVotes',
-    ]);
+    ]) as TIdeaQuery;
 
     const { meta, data } = await IdeaService.getAllIdeas(query);
 
@@ -141,7 +142,7 @@ const getAllIdeasAdmin = catchAsync(async (req: Request, res: Response) => {
         'isPaid',
         'search',
         'minVotes',
-    ]);
+    ]) as TIdeaQuery;
 
     const { meta, data } = await IdeaService.getAllIdeasAdmin(query);
 
