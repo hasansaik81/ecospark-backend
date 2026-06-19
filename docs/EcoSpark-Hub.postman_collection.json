@@ -17,7 +17,14 @@
     { "key": "commentId",      "value": "",                           "type": "string" },
     { "key": "checkoutUrl",    "value": "",                           "type": "string" },
     { "key": "targetUserId",   "value": "",                           "type": "string" },
-    { "key": "refreshToken",   "value": "",                           "type": "string" }
+    { "key": "refreshToken",   "value": "",                           "type": "string" },
+    { "key": "memberEmail",    "value": "",                           "type": "string" },
+    { "key": "memberPassword", "value": "",                           "type": "string" },
+    { "key": "adminEmail",     "value": "",                           "type": "string" },
+    { "key": "adminPassword",  "value": "",                           "type": "string" },
+    { "key": "newCategoryName","value": "",                           "type": "string" },
+    { "key": "rejectIdeaId",   "value": "",                           "type": "string" },
+    { "key": "newsletterEmail","value": "",                           "type": "string" }
   ],
   "event": [
     {
@@ -177,7 +184,7 @@
                   "// Change these to match your seed/env if needed",
                   "if (!pm.collectionVariables.get('adminEmail')) {",
                   "    pm.collectionVariables.set('adminEmail', 'admin@ecospark.com');",
-                  "    pm.collectionVariables.set('adminPassword', 'Admin@123');",
+                  "    pm.collectionVariables.set('adminPassword', 'admin123');",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -483,7 +490,7 @@
             "url": { "raw": "{{baseUrl}}/users/{{targetUserId}}/status", "host": ["{{baseUrl}}"], "path": ["users", "{{targetUserId}}", "status"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"status\": \"INACTIVE\"\n}"
+              "raw": "{\n  \"status\": \"DEACTIVATED\"\n}"
             }
           }
         },

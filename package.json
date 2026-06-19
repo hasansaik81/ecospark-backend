@@ -10,8 +10,9 @@
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
     "format": "prettier --write .",
-    "seed:admin": "npx tsx src/seed/seedAdmin.ts"
-  },
+    "seed:admin": "npx tsx src/seed/seedAdmin.ts",
+     "stripe:webhook": "stripe listen --forward-to localhost:5000/webhook"
+  }, 
   "keywords": [
     "express",
     "prisma",

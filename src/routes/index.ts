@@ -12,6 +12,12 @@ import { DashboardRoutes } from "../modules/Dashboard/dashboard.route";
 const router = Router();
 
 const routerManger = [
+
+    //  {
+    //     path: "/",
+    //     route: CommentRoutes,
+    // },
+
     {
         path: "/auth",
         route: AuthRoutes,
@@ -28,6 +34,12 @@ const routerManger = [
         path: "/ideas",
         route: IdeaRoutes,
     },
+      
+      {
+        path: "/ideas",
+        route: CommentRoutes,
+    },
+
     {
         path: "/ideas",
         route: VoteRoutes,
@@ -40,10 +52,8 @@ const routerManger = [
         path: "/newsletter",
         route: NewsletterRoutes,
     },
-    {
-        path: "/",
-        route: CommentRoutes,
-    },
+   
+
     {
         path: "/dashboard",
         route: DashboardRoutes,

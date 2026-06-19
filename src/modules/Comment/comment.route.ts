@@ -13,11 +13,18 @@ router.get(
 );
 
 router.post(
-    '/ideas/:id/comments',
+    '/:id/comments',
     auth('member'),
     validateRequest(commentValidationSchema.createComment),
     CommentController.createComment,
 );
+
+// router.post(
+//     '/ideas/:id/comments',
+//     auth('member'),
+//     validateRequest(commentValidationSchema.createComment),
+//     CommentController.createComment,
+// );
 
 router.delete(
     '/comments/:id',
