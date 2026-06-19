@@ -21,6 +21,16 @@ export type TChangePassword = {
     currentPassword: string;
     newPassword: string;
     confirmPassword: string;
+    
 };
+
+
+// ...existing code...
+export type IRequestUserFromToken = {
+    userId?: string;
+    email?: string;
+    role?: string;
+};
+// ...existing code...
 
 export type TUserPublic = Omit<TUser, 'password'>;

@@ -117,17 +117,42 @@ import { PaymentService } from "./payment.service";
 /**
  * Create Stripe Checkout Session
  */
+// const createCheckoutSession = catchAsync(async (req: Request, res: Response) => {
+//   if (!req.user?.id) {
+//     throw new Error("Unauthorized");
+//   }
+
+//   const userId = req.user.id;
+//   // const { ideaId } = req.body;
+//   const { ideaId } = req.params;
+
+//   const result = await PaymentService.createCheckoutSession(
+//     userId,
+//     ideaId
+//   );
+
+//   res.status(httpStatus.OK).json({
+//     success: true,
+//     message: "Checkout session created successfully",
+//     data: result,
+//   });
+// });
+
 const createCheckoutSession = catchAsync(async (req: Request, res: Response) => {
   if (!req.user?.id) {
     throw new Error("Unauthorized");
   }
 
   const userId = req.user.id;
-  const { ideaId } = req.body;
+
+  // ✅ সমাধান: যদি অ্যারে হয় তবে প্রথম উপাদান নিন, নাহলে সরাসরি স্ট্রিং নিন
+  const ideaId = Array.isArray(req.params.ideaId)
+    ? req.params.ideaId[0]
+    : req.params.ideaId;
 
   const result = await PaymentService.createCheckoutSession(
     userId,
-    ideaId
+    ideaId // এখন TypeScript আর কোনো এরর দেবে না
   );
 
   res.status(httpStatus.OK).json({
@@ -136,6 +161,8 @@ const createCheckoutSession = catchAsync(async (req: Request, res: Response) => 
     data: result,
   });
 });
+
+
 
 /**
  * Stripe Webhook Handler

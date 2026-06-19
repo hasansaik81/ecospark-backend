@@ -88,22 +88,57 @@
 
 
 
-// src/middlewares/validateRequest.ts
+// // src/middlewares/validateRequest.ts
+// import { NextFunction, Request, Response } from 'express';
+// import { ZodTypeAny } from 'zod';
+
+// const validateRequest = (schema: ZodTypeAny) => {
+//     return async (req: Request, res: Response, next: NextFunction) => {
+//         try {
+//             console.log('📋 Validating:', req.body);
+
+//             // যদি body খালি বা undefined হয়
+//             if (!req.body || typeof req.body !== 'object') {
+//                 req.body = {};
+//             }
+
+//             await schema.parseAsync({
+//                 body: req.body,
+//                 cookies: req.cookies,
+//             });
+
+//             console.log('✅ Validation passed');
+//             next();
+//         } catch (err) {
+//             console.log('❌ Validation error:', err);
+//             next(err);
+//         }
+//     };
+// };
+
+// export default validateRequest;
+
+
+
+
 import { NextFunction, Request, Response } from 'express';
 import { ZodTypeAny } from 'zod';
 
 const validateRequest = (schema: ZodTypeAny) => {
     return async (req: Request, res: Response, next: NextFunction) => {
         try {
-            console.log('📋 Validating:', req.body);
+            console.log('📋 Validating Request Elements...');
 
             // যদি body খালি বা undefined হয়
             if (!req.body || typeof req.body !== 'object') {
                 req.body = {};
             }
 
+            // ✅ সমাধান: params এবং query-কেও Zod parse-এর ভেতরে দিয়ে দিন
             await schema.parseAsync({
                 body: req.body,
+                query: req.query,
+                params: req.params, 
                 cookies: req.cookies,
             });
 
@@ -117,4 +152,3 @@ const validateRequest = (schema: ZodTypeAny) => {
 };
 
 export default validateRequest;
-
