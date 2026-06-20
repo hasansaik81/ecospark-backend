@@ -8,11 +8,11 @@ const router = express.Router();
 
 router.post(
     '/:id/vote',
-    auth('member'),
+    auth('MEMBER'),
     validateRequest(voteValidationSchema.castVote),
     VoteController.castVote,
 );
 
-router.delete('/:id/vote', auth('member'), VoteController.removeVote);
+router.delete('/:id/vote', auth('MEMBER'), VoteController.removeVote);
 
 export const VoteRoutes = router;

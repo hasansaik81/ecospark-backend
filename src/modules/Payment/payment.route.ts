@@ -8,7 +8,7 @@ const router = express.Router();
 
 router.post(
     '/checkout/:ideaId',
-    auth('member'),
+    auth('MEMBER'),
     validateRequest(paymentValidationSchema.checkout),
     PaymentController.createCheckoutSession,
 );
@@ -23,7 +23,7 @@ router.post(
 
 router.get(
     '/verify/:ideaId',
-    auth('member'),
+    auth('MEMBER'),
     validateRequest(paymentValidationSchema.verifyPayment),
     PaymentController.verifyPayment,
 );

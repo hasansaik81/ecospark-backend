@@ -742,6 +742,104 @@
 
 
 
+// import { NextFunction, Request, Response } from 'express';
+// import httpStatus from 'http-status';
+// import jwt, { JwtPayload } from 'jsonwebtoken';
+// import config from '../config';
+// import AppError from '../errors/AppError';
+// import catchAsync from '../utils/catchAsync';
+// import { prisma } from '../lib/prisma';
+
+// export const USER_ROLE = {
+//     ADMIN: 'ADMIN',
+//     MEMBER: 'MEMBER',
+// } as const;
+
+// type AuthRole = keyof typeof USER_ROLE;
+
+// const auth = (...requiredRoles: AuthRole[]) => {
+//     return catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+        
+//         // 🔐 ১. হেডার থেকে টোকেন কালেক্ট করা
+//         const authHeader = req.headers.authorization;
+
+//         if (!authHeader) {
+//             throw new AppError(httpStatus.UNAUTHORIZED, 'You are not authorized! Authorization header is missing.');
+//         }
+
+//         // 🔐 ২. Bearer ফরম্যাট চেক এবং টোকেন আলাদা করা
+//         if (!authHeader.startsWith('Bearer ')) {
+//             throw new AppError(httpStatus.UNAUTHORIZED, 'Invalid token format! Use: Bearer <token>');
+//         }
+
+//         const token = authHeader.substring(7).trim();
+
+//         if (!token) {
+//             throw new AppError(httpStatus.UNAUTHORIZED, 'Token is missing!');
+//         }
+
+//         // 🔐 ৩. টোকেন ভেরিফাই করা
+//         const secretKey = config.jwt_access_secret || process.env.JWT_ACCESS_SECRET;
+        
+//         if (!secretKey) {
+//             throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, 'JWT configuration secret is missing on server.');
+//         }
+
+//         let decoded: JwtPayload;
+
+//         try {
+//             decoded = jwt.verify(token, secretKey) as JwtPayload;
+//         } catch (error: any) {
+//             if (error.name === 'TokenExpiredError') {
+//                 throw new AppError(httpStatus.UNAUTHORIZED, 'Token has expired! Please login again.');
+//             }
+//             throw new AppError(httpStatus.UNAUTHORIZED, 'Invalid token!');
+//         }
+
+//         const { role, email } = decoded;
+
+//         if (!role || !email) {
+//             throw new AppError(httpStatus.UNAUTHORIZED, 'Invalid token payload data!');
+//         }
+
+//         // 🧑‍💻 ৪. ডাটাবেজে ইউজার চেক করা
+//         const user = await prisma.user.findUnique({
+//             where: { email },
+//         });
+
+//         if (!user) {
+//             throw new AppError(httpStatus.NOT_FOUND, 'This user was not found!');
+//         }
+
+//         if (user.status !== 'ACTIVE') {
+//             throw new AppError(httpStatus.FORBIDDEN, 'Your account is deactivated!');
+//         }
+
+//         // 🔐 ৫. রোল পারমিশন চেক করা (Strict Case Matching)
+//         const userRole = role.toString().toUpperCase() as AuthRole;
+        
+//         if (requiredRoles.length > 0 && !requiredRoles.includes(userRole)) {
+//             throw new AppError(httpStatus.FORBIDDEN, 'You do not have permission to access this route!');
+//         }
+
+//         // ✅ ৬. সফল হলে রিকোয়েস্টে ইউজার ডাটা এটাচ করা
+//         req.user = {
+//             id: user.id,
+//             userId: user.id, // আপনার কন্ট্রোলারের সেফটির জন্য দুটিই রাখা হলো
+//             email: user.email,
+//             role: userRole,
+//             ...decoded,
+//         };
+
+//         next();
+//     });
+// };
+
+// export default auth;
+
+
+
+
 import { NextFunction, Request, Response } from 'express';
 import httpStatus from 'http-status';
 import jwt, { JwtPayload } from 'jsonwebtoken';
@@ -767,12 +865,12 @@ const auth = (...requiredRoles: AuthRole[]) => {
             throw new AppError(httpStatus.UNAUTHORIZED, 'You are not authorized! Authorization header is missing.');
         }
 
-        // 🔐 ২. Bearer ফরম্যাট চেক এবং টোকেন আলাদা করা
-        if (!authHeader.startsWith('Bearer ')) {
-            throw new AppError(httpStatus.UNAUTHORIZED, 'Invalid token format! Use: Bearer <token>');
-        }
+        // 🔐 ২. টোকেন এক্সট্র্যাক্ট করা (Bearer থাকলেও চলবে, না থাকলেও সরাসরি টোকেন নিয়ে নেবে)
+        let token = authHeader.trim();
 
-        const token = authHeader.substring(7).trim();
+        if (authHeader.startsWith('Bearer ')) {
+            token = authHeader.substring(7).trim();
+        }
 
         if (!token) {
             throw new AppError(httpStatus.UNAUTHORIZED, 'Token is missing!');
@@ -822,10 +920,10 @@ const auth = (...requiredRoles: AuthRole[]) => {
             throw new AppError(httpStatus.FORBIDDEN, 'You do not have permission to access this route!');
         }
 
-        // ✅ ৬. সফল হলে রিকোয়েস্টে ইউজার ডাটা এটাচ করা
+        // ✅ ৬. সফল হলে রিকোয়েস্টে ইউজার ডাটা এটাচ করা
         req.user = {
             id: user.id,
-            userId: user.id, // আপনার কন্ট্রোলারের সেফটির জন্য দুটিই রাখা হলো
+            userId: user.id,
             email: user.email,
             role: userRole,
             ...decoded,

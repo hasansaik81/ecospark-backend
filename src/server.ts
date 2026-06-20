@@ -12,3 +12,7 @@ async function main() {
 }
 
 main();
+
+
+// src/server.ts
+

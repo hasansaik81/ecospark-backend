@@ -24,7 +24,7 @@ router.get('/:id', CategoryController.getCategoryById);
  */
 router.post(
     '/',
-    auth('admin'),
+    auth('ADMIN'),
     validateRequest(categoryValidationSchema.createCategory),
     CategoryController.createCategory,
 );
@@ -35,7 +35,7 @@ router.post(
  */
 router.patch(
     '/:id',
-    auth('admin'),
+    auth('ADMIN'),
     validateRequest(categoryValidationSchema.updateCategory),
     CategoryController.updateCategory,
 );
@@ -46,7 +46,7 @@ router.patch(
  */
 router.delete(
     '/:id',
-    auth('admin'),
+    auth('ADMIN'),
     CategoryController.deleteCategory,
 );
 

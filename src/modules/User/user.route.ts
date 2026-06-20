@@ -12,7 +12,7 @@ const router = express.Router();
  * GET /api/users/me
  * Get the authenticated user's own profile
  */
-router.get('/me', auth('member', 'admin'), UserController.getMyProfile);
+router.get('/me', auth('MEMBER', 'ADMIN'), UserController.getMyProfile);
 
 /**
  * PATCH /api/users/me
@@ -20,7 +20,7 @@ router.get('/me', auth('member', 'admin'), UserController.getMyProfile);
  */
 router.patch(
     '/me',
-    auth('member', 'admin'),
+    auth('MEMBER', 'ADMIN'),
     validateRequest(userValidationSchema.updateProfile),
     UserController.updateMyProfile,
 );
@@ -31,7 +31,7 @@ router.patch(
  */
 router.patch(
     '/me/change-password',
-    auth('member', 'admin'),
+    auth('MEMBER', 'ADMIN'),
     validateRequest(userValidationSchema.changePassword),
     UserController.changePassword,
 );
@@ -42,13 +42,13 @@ router.patch(
  * GET /api/users
  * Admin: List all registered users
  */
-router.get('/', auth('admin'), UserController.getAllUsers);
+router.get('/', auth('ADMIN'), UserController.getAllUsers);
 
 /**
  * GET /api/users/:id
  * Admin: Get a specific user by ID
  */
-router.get('/:id', auth('admin'), UserController.getUserById);
+router.get('/:id', auth('ADMIN'), UserController.getUserById);
 
 /**
  * PATCH /api/users/:id/status
@@ -56,7 +56,7 @@ router.get('/:id', auth('admin'), UserController.getUserById);
  */
 router.patch(
     '/:id/status',
-    auth('admin'),
+    auth('ADMIN'),
     validateRequest(userValidationSchema.updateUserStatus),
     UserController.updateUserStatus,
 );
@@ -67,7 +67,7 @@ router.patch(
  */
 router.patch(
     '/:id/role',
-    auth('admin'),
+    auth('ADMIN'),
     validateRequest(userValidationSchema.updateUserRole),
     UserController.updateUserRole,
 );
