@@ -62,9 +62,10 @@ const config = {
   cloudinary_cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   cloudinary_api_key: process.env.CLOUDINARY_API_KEY,
   cloudinary_api_secret: process.env.CLOUDINARY_API_SECRET,
+
 };
 
-// 🛠️ একটি কুইক সেফটি চেক যেন ভ্যালু undefined থাকলে টার্মিনালেই ধরা পড়ে
+//  একটি কুইক সেফটি চেক যেন ভ্যালু undefined থাকলে টার্মিনালেই ধরা পড়ে
 if (!config.cloudinary_cloud_name || !config.cloudinary_api_key || !config.cloudinary_api_secret) {
   console.warn("⚠️ Warning: Cloudinary credentials are missing in .env file!");
 }

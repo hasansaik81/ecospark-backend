@@ -4,26 +4,56 @@ import validateRequest from '../../middlewares/validateRequest';
 import { CommentController } from './comment.controller';
 import { commentValidationSchema } from './comment.validation';
 
+// const router = express.Router();
+
+// router.get(
+//     '/ideas/:id/comments',
+//     validateRequest(commentValidationSchema.getComments),
+//     CommentController.getComments,
+// );
+
+// router.post(
+//     '/ideas/:id/comments',
+//     auth('MEMBER'),
+//     validateRequest(commentValidationSchema.createComment),
+//     CommentController.createComment,
+// );
+
+// router.delete(
+//     '/comments/:id',
+//     auth(),
+//     validateRequest(commentValidationSchema.deleteComment),
+//     CommentController.deleteComment,
+// );
+
+
+
+// src/app/modules/Comment/comment.route.ts
 const router = express.Router();
 
+// 📥 আইডিয়ার সব কমেন্ট গেট করার জন্য
 router.get(
-    '/ideas/:id/comments',
+    '/:id', // 👈 শুধু '/:id' থাকবে (যেখানে id হলো ideaId)
     validateRequest(commentValidationSchema.getComments),
     CommentController.getComments,
 );
 
+// 📤 নতুন কমেন্ট পোস্ট করার জন্য
 router.post(
-    '/ideas/:id/comments',
+    '/:id', // 👈 শুধু '/:id' থাকবে
     auth('MEMBER'),
     validateRequest(commentValidationSchema.createComment),
     CommentController.createComment,
 );
 
+// 🗑️ কমেন্ট ডিলিট করার জন্য
 router.delete(
-    '/comments/:id',
+    '/:id', // 👈 এখানে id হলো কমেন্টের নিজস্ব id
     auth(),
     validateRequest(commentValidationSchema.deleteComment),
     CommentController.deleteComment,
 );
+
+// export const CommentRoutes = router;
 
 export const CommentRoutes = router;

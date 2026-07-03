@@ -182,9 +182,16 @@ exports.Prisma.PaymentScalarFieldEnum = {
   id: 'id',
   amount: 'amount',
   transactionId: 'transactionId',
+  paymentGatewayData: 'paymentGatewayData',
   status: 'status',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
+  currency: 'currency',
+  paymentMethod: 'paymentMethod',
+  paidAt: 'paidAt',
+  stripePaymentId: 'stripePaymentId',
+  stripeSessionId: 'stripeSessionId',
+  stripeEventId: 'stripeEventId',
   userId: 'userId',
   ideaId: 'ideaId'
 };
@@ -202,6 +209,11 @@ exports.Prisma.SortOrder = {
   desc: 'desc'
 };
 
+exports.Prisma.NullableJsonNullValueInput = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull
+};
+
 exports.Prisma.QueryMode = {
   default: 'default',
   insensitive: 'insensitive'
@@ -210,6 +222,12 @@ exports.Prisma.QueryMode = {
 exports.Prisma.NullsOrder = {
   first: 'first',
   last: 'last'
+};
+
+exports.Prisma.JsonNullValueFilter = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull,
+  AnyNull: Prisma.AnyNull
 };
 exports.Role = exports.$Enums.Role = {
   MEMBER: 'MEMBER',
@@ -230,7 +248,10 @@ exports.IdeaStatus = exports.$Enums.IdeaStatus = {
 
 exports.PaymentStatus = exports.$Enums.PaymentStatus = {
   FREE: 'FREE',
-  PAID: 'PAID'
+  PAID: 'PAID',
+  PENDING: 'PENDING',
+  SUCCESS: 'SUCCESS',
+  FAILED: 'FAILED'
 };
 
 exports.VoteType = exports.$Enums.VoteType = {

@@ -1,145 +1,281 @@
-import bcrypt from 'bcrypt';
-import httpStatus from 'http-status';
-import jwt, { JwtPayload } from 'jsonwebtoken';
-import config from '../../config';
-import AppError from '../../errors/AppError';
-import { prisma } from '../../lib/prisma';
+// import { prisma } from "../../lib/prisma";
+// import bcrypt from "bcryptjs";
+// import jwt, { Secret } from "jsonwebtoken";
 
-// Register a new user
-const register = async (payload: any) => {
-    const isUserExists = await prisma.user.findUnique({
-        where: { email: payload.email },
-    });
 
-    if (isUserExists) {
-        throw new AppError(httpStatus.BAD_REQUEST, 'Email is already registered');
-    }
 
-    const hashedPassword = await bcrypt.hash(
-        payload.password,
-        config.bcrypt_salt_rounds,
-    );
+import jwt, { JwtPayload } from "jsonwebtoken";
+import httpStatus from "http-status";
+import AppError from "../../errors/AppError";
+import config from "../../config";
+import bcrypt from "bcryptjs";
+import { prisma } from "../../lib/prisma";
 
-    const newUser = await prisma.user.create({
-        data: {
-            name: payload.name,
-            email: payload.email,
-            password: hashedPassword,
-            profileImage: payload.profileImage || null,
-        },
-        select: {
-            id: true,
-            name: true,
-            email: true,
-            profileImage: true,
-            role: true,
-            status: true,
-            createdAt: true,
-            updatedAt: true,
-        },
-    });
 
-    return newUser;
-};
 
-// Login user and issue tokens
-const login = async (payload: any) => {
-    const user = await prisma.user.findUnique({
-        where: { email: payload.email },
-    });
+// export const secret = "iadmcttoken";
 
-    if (!user) {
-        throw new AppError(httpStatus.NOT_FOUND, 'User not found');
-    }
+const createUserIntoDb=async(payload:any)=>{
+ const hashPassword=await bcrypt.hash(payload.password,8) 
 
-    if (user.status !== 'ACTIVE') {
-        throw new AppError(httpStatus.FORBIDDEN, 'Your account is deactivated');
-    }
+const result =await prisma.user.create({
+data:{...payload,password:hashPassword},
+});
+const {password, ...newResult}=result;
+return  newResult
+}
 
-    const isPasswordMatched = await bcrypt.compare(payload.password, user.password);
 
-    if (!isPasswordMatched) {
-        throw new AppError(httpStatus.UNAUTHORIZED, 'Invalid credentials');
-    }
+const loginUserIntoDb=async(payload:any)=>{
+ const user=await prisma.user.findUnique({
+    where:{
+        email:payload.email
+    },
+ })
+ if(!user){
+    throw new Error ("User not found")
+ } 
+ const ispasswordMatched=await bcrypt.compare(
+    payload.password,
+    user.password,
+ );
+ if(!ispasswordMatched){
+    throw new Error ("Invalid creadential!!");
+ };
 
-    const jwtPayload = {
-        userId: user.id,
-        email: user.email,
-        role: user.role,
-    };
+ const userData = {
+    id: user.id,
+    userId: user.id,
+    name: user.name,
+    role: user.role,
+    status: user.status,
+    email: user.email,
+  };
 
-    const accessToken = jwt.sign(
-        jwtPayload,
-        config.jwt_access_secret as string,
-        { expiresIn: config.jwt_access_expires_in as any },
-    );
+  if (!config.jwt_access_secret || !config.jwt_refresh_secret) {
+    throw new Error("JWT secrets not configured in environment");
+  }
 
-    const refreshToken = jwt.sign(
-        jwtPayload,
-        config.jwt_refresh_secret as string,
-        { expiresIn: config.jwt_refresh_expires_in as any },
-    );
+  const accessToken = jwt.sign(userData, config.jwt_access_secret, {
+    expiresIn: config.jwt_access_expires_in as any,
+  });
 
-    return {
-        user: {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            profileImage: user.profileImage,
-            role: user.role,
-            status: user.status,
-        },
-        accessToken,
-        refreshToken,
-    };
-};
+  const refreshToken = jwt.sign(userData, config.jwt_refresh_secret, {
+    expiresIn: config.jwt_refresh_expires_in as any,
+  });
 
-// Generate a new access token using a refresh token
+  const { password, ...userWithoutPassword } = user;
+
+  return {
+    accessToken,
+    refreshToken,
+    user: userWithoutPassword,
+  };
+}
+
+
 const refreshToken = async (token: string) => {
-    let decoded: JwtPayload;
+  if (!token) {
+    throw new AppError(httpStatus.UNAUTHORIZED, "Refresh token missing");
+  }
 
-    try {
-        decoded = jwt.verify(
-            token,
-            config.jwt_refresh_secret as string,
-        ) as JwtPayload;
-    } catch (error) {
-        throw new AppError(httpStatus.UNAUTHORIZED, 'Invalid refresh token');
+  let decoded: JwtPayload;
+
+  try {
+    decoded = jwt.verify(
+      token,
+      config.jwt_refresh_secret as string
+    ) as JwtPayload;
+  } catch (err) {
+    throw new AppError(httpStatus.UNAUTHORIZED, "Invalid refresh token");
+  }
+
+  const userId = decoded.id ?? decoded.userId;
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, "User not found");
+  }
+
+  if (user.status !== "ACTIVE") {
+    throw new AppError(httpStatus.FORBIDDEN, "User is not active");
+  }
+
+  const accessToken = jwt.sign(
+    {
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+    },
+    config.jwt_access_secret as string,
+    {
+      expiresIn: config.jwt_access_expires_in as any,
     }
+  );
 
-    const { email } = decoded;
+  return { accessToken };
+};
 
-    const user = await prisma.user.findUnique({
-        where: { email },
-    });
-
-    if (!user) {
-        throw new AppError(httpStatus.NOT_FOUND, 'User not found');
-    }
-
-    if (user.status !== 'ACTIVE') {
-        throw new AppError(httpStatus.FORBIDDEN, 'Your account is deactivated');
-    }
-
-    const jwtPayload = {
-        userId: user.id,
-        email: user.email,
-        role: user.role,
-    };
-
-    const accessToken = jwt.sign(
-        jwtPayload,
-        config.jwt_access_secret as string,
-        { expiresIn: config.jwt_access_expires_in as any },
-    );
-
-    return {
-        accessToken,
-    };
+const getMe = async (userId: string) => {
+  return prisma.user.findUnique({
+    where: { id: userId },
+   //  include: {
+   //    tutorProfile: true,
+   //  },
+  });
 };
 
 export const AuthService = {
-    register,
-    login,
+    createUserIntoDb,
+    loginUserIntoDb,
     refreshToken,
-};
+      getMe
+
+    };
+
+
+// ########################################################################################################
+
+
+// import jwt, { JwtPayload } from "jsonwebtoken";
+// import httpStatus from "http-status";
+// import AppError from "../../errors/AppError";
+// import config from "../../config";
+// import bcrypt from "bcryptjs";
+// import { prisma } from "../../lib/prisma";
+
+// const createUserIntoDb = async (payload: any) => {
+//   // সল্ট রাউন্ড ৮ থেকে পরিবর্তন করে ১০ করা হলো
+//   const hashPassword = await bcrypt.hash(payload.password, 10);
+
+//   const result = await prisma.user.create({
+//     data: {
+//       ...payload,
+//       password: hashPassword,
+//       status: payload.status || 'ACTIVE' // ডাটাবেজে ইউজার যেন ACTIVE হিসেবে তৈরি হয়
+//     },
+//   });
+
+//   const { password, ...newResult } = result;
+//   return newResult;
+// };
+
+// const loginUserIntoDb = async (payload: any) => {
+//   const user = await prisma.user.findUnique({
+//     where: {
+//       email: payload.email
+//     },
+//   });
+
+//   if (!user) {
+//     throw new AppError(httpStatus.NOT_FOUND, "User not found");
+//   }
+
+//   // পাসওয়ার্ড ম্যাচিং চেক
+//   const ispasswordMatched = await bcrypt.compare(
+//     payload.password,
+//     user.password,
+//   );
+
+//   if (!ispasswordMatched) {
+//     throw new AppError(httpStatus.UNAUTHORIZED, "Invalid credential!!");
+//   }
+
+//   // ইউজার সক্রিয় কিনা চেক
+//   if (user.status !== "ACTIVE") {
+//     throw new AppError(httpStatus.FORBIDDEN, "Your account is deactivated!");
+//   }
+
+//   const userData = {
+//     id: user.id,
+//     userId: user.id,
+//     name: user.name,
+//     role: user.role,
+//     status: user.status,
+//     email: user.email,
+//   };
+
+//   if (!config.jwt_access_secret || !config.jwt_refresh_secret) {
+//     throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, "JWT secrets not configured in environment");
+//   }
+
+//   const accessToken = jwt.sign(userData, config.jwt_access_secret as string, {
+//     expiresIn: config.jwt_access_expires_in as any,
+//   });
+
+//   const refreshToken = jwt.sign(userData, config.jwt_refresh_secret as string, {
+//     expiresIn: config.jwt_refresh_expires_in as any,
+//   });
+
+//   const { password, ...userWithoutPassword } = user;
+
+//   return {
+//     accessToken,
+//     refreshToken,
+//     user: userWithoutPassword,
+//   };
+// };
+
+// const refreshToken = async (token: string) => {
+//   if (!token) {
+//     throw new AppError(httpStatus.UNAUTHORIZED, "Refresh token missing");
+//   }
+
+//   let decoded: JwtPayload;
+//   try {
+//     decoded = jwt.verify(
+//       token,
+//       config.jwt_refresh_secret as string
+//     ) as JwtPayload;
+//   } catch (err) {
+//     throw new AppError(httpStatus.UNAUTHORIZED, "Invalid refresh token");
+//   }
+
+//   const userId = decoded.id ?? decoded.userId;
+
+//   const user = await prisma.user.findUnique({
+//     where: { id: userId },
+//   });
+
+//   if (!user) {
+//     throw new AppError(httpStatus.NOT_FOUND, "User not found");
+//   }
+
+//   if (user.status !== "ACTIVE") {
+//     throw new AppError(httpStatus.FORBIDDEN, "User is not active");
+//   }
+
+//   // অ্যাক্সেস টোকেনের ডাটা স্ট্রাকচার loginUserIntoDb এর মতো হুবহু সেম রাখা হলো
+//   const accessToken = jwt.sign(
+//     {
+//       id: user.id,
+//       userId: user.id,
+//       name: user.name,
+//       role: user.role,
+//       status: user.status,
+//       email: user.email,
+//     },
+//     config.jwt_access_secret as string,
+//     {
+//       expiresIn: config.jwt_access_expires_in as any,
+//     }
+//   );
+
+//   return { accessToken };
+// };
+
+// const getMe = async (userId: string) => {
+//   return prisma.user.findUnique({
+//     where: { id: userId },
+//   });
+// };
+
+// export const AuthService = {
+//   createUserIntoDb,
+//   loginUserIntoDb,
+//   refreshToken,
+//   getMe
+// };

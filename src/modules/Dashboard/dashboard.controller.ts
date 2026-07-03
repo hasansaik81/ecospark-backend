@@ -168,50 +168,88 @@
 
 
 
-import { Request, Response } from 'express';
-import httpStatus from 'http-status';
-// import { catchAsync } from '../../shared/catchAsync';
-// import { sendResponse } from '../../shared/sendResponse';
-import { DashboardService } from './dashboard.service';
-import catchAsync from '../../utils/catchAsync';
-import sendResponse from '../../utils/sendResponse';
-import AppError from '../../errors/AppError';
-// ...existing code...
-import { IRequestUserFromToken } from '../User/user.interface'; // <-- adjust path/casing
-// ...existing code...
+// import { Request, Response } from 'express';
+// import httpStatus from 'http-status';
+// // import { catchAsync } from '../../shared/catchAsync';
+// // import { sendResponse } from '../../shared/sendResponse';
+// import { DashboardService } from './dashboard.service';
+// import catchAsync from '../../utils/catchAsync';
+// import sendResponse from '../../utils/sendResponse';
+// import AppError from '../../errors/AppError';
+// // ...existing code...
+// import { IRequestUserFromToken } from '../User/user.interface'; // <-- adjust path/casing
+// // ...existing code...
 
-// const getDashboardStatsData = catchAsync(
-//     async (req: Request, res: Response) => {
-//         const result = await DashboardService.getDashboardStatsData(
-//             req.user
-//         );
-
-
-//         sendResponse(res, {
-//     statusCode: httpStatus.OK,
-//     success: true,
-//     message: 'Dashboard stats retrieved successfully',
-//     data: result,
-// });
-
-//         // sendResponse(res, {
-//         //     httpStatusCode: httpStatus.OK,
-//         //     success: true,
-//         //     message: 'Dashboard stats retrieved successfully',
-//         //     data: result,
-//         // });
-//     }
-// );
+// // const getDashboardStatsData = catchAsync(
+// //     async (req: Request, res: Response) => {
+// //         const result = await DashboardService.getDashboardStatsData(
+// //             req.user
+// //         );
 
 
+// //         sendResponse(res, {
+// //     statusCode: httpStatus.OK,
+// //     success: true,
+// //     message: 'Dashboard stats retrieved successfully',
+// //     data: result,
+// // });
+
+// //         // sendResponse(res, {
+// //         //     httpStatusCode: httpStatus.OK,
+// //         //     success: true,
+// //         //     message: 'Dashboard stats retrieved successfully',
+// //         //     data: result,
+// //         // });
+// //     }
+// // );
+
+
+// // const getDashboardStatsData = catchAsync(
+// //     async (req: Request, res: Response) => {
+// //         if (!req.user) {
+// //             throw new AppError(httpStatus.UNAUTHORIZED, 'Unauthorized user');
+// //         }
+
+// //         const result = await DashboardService.getDashboardStatsData(
+// //             req.user
+// //         );
+
+// //         sendResponse(res, {
+// //             statusCode: httpStatus.OK,
+// //             success: true,
+// //             message: 'Dashboard stats retrieved successfully',
+// //             data: result,
+// //         });
+// //     }
+// // );
+
+
+
+// // export const DashboardController = {
+// //     getDashboardStatsData,
+// // };
+
+
+
+
+
+// // ...existing code...
 // const getDashboardStatsData = catchAsync(
 //     async (req: Request, res: Response) => {
 //         if (!req.user) {
 //             throw new AppError(httpStatus.UNAUTHORIZED, 'Unauthorized user');
 //         }
 
+//         // Normalize JWT payload to IRequestUserFromToken
+//         const token = req.user as any;
+//         const requestUser: IRequestUserFromToken = {
+//             userId: token.userId ?? token.id,
+//             email: token.email,
+//             role: token.role,
+//         };
+
 //         const result = await DashboardService.getDashboardStatsData(
-//             req.user
+//             requestUser
 //         );
 
 //         sendResponse(res, {
@@ -223,8 +261,6 @@ import { IRequestUserFromToken } from '../User/user.interface'; // <-- adjust pa
 //     }
 // );
 
-
-
 // export const DashboardController = {
 //     getDashboardStatsData,
 // };
@@ -232,25 +268,63 @@ import { IRequestUserFromToken } from '../User/user.interface'; // <-- adjust pa
 
 
 
+import { Request, Response } from 'express';
+import httpStatus from 'http-status';
 
-// ...existing code...
+import AppError from '../../errors/AppError';
+import catchAsync from '../../utils/catchAsync';
+import sendResponse from '../../utils/sendResponse';
+
+import {
+    DashboardService,
+    IRequestUserFromToken,
+} from './dashboard.service';
+
 const getDashboardStatsData = catchAsync(
     async (req: Request, res: Response) => {
         if (!req.user) {
-            throw new AppError(httpStatus.UNAUTHORIZED, 'Unauthorized user');
+            throw new AppError(
+                httpStatus.UNAUTHORIZED,
+                'Unauthorized user',
+            );
         }
 
-        // Normalize JWT payload to IRequestUserFromToken
-        const token = req.user as any;
+        const token = req.user as {
+            userId?: string;
+            id?: string;
+            email?: string;
+            role?: string;
+        };
+
+        const userId = token.userId ?? token.id;
+
+        if (!userId) {
+            throw new AppError(
+                httpStatus.UNAUTHORIZED,
+                'User id missing from token',
+            );
+        }
+
+        if (
+            token.role !== 'ADMIN' &&
+            token.role !== 'MEMBER'
+        ) {
+            throw new AppError(
+                httpStatus.FORBIDDEN,
+                'Invalid user role',
+            );
+        }
+
         const requestUser: IRequestUserFromToken = {
-            userId: token.userId ?? token.id,
-            email: token.email,
+            userId,
+            email: token.email ?? '',
             role: token.role,
         };
 
-        const result = await DashboardService.getDashboardStatsData(
-            requestUser
-        );
+        const result =
+            await DashboardService.getDashboardStatsData(
+                requestUser,
+            );
 
         sendResponse(res, {
             statusCode: httpStatus.OK,
@@ -258,7 +332,7 @@ const getDashboardStatsData = catchAsync(
             message: 'Dashboard stats retrieved successfully',
             data: result,
         });
-    }
+    },
 );
 
 export const DashboardController = {

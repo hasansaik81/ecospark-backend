@@ -220,73 +220,289 @@
 
 
 
+// import httpStatus from 'http-status';
+// import AppError from '../../errors/AppError';
+// import { prisma } from '../../lib/prisma';
+// // import { IUser } from '../user/user.interface'; 
+// // // অথবা তোমার IRequestUser type
+// // import { IUser } from '../User/user.interface';
+// // import { IUser } from '../User/user.interface';
+
+// // The JWT payload contains { userId, email, role }
+// type IRequestUserFromToken = {
+//     userId?: string;
+//     email?: string;
+//     role?: string;
+// };
+
+// const getDashboardStatsData = async (user: IRequestUserFromToken) => {
+//     let statsData;
+
+//     switch (user.role) {
+//         case 'ADMIN':
+//             statsData = await getAdminStats();
+//             break;
+
+//         case 'MEMBER':
+//             if (!user.userId) {
+//                 throw new AppError(httpStatus.BAD_REQUEST, 'Missing user id in token');
+//             }
+//             statsData = await getMemberStats(user.userId);
+//             break;
+
+//         default:
+//             throw new AppError(
+//                 httpStatus.BAD_REQUEST,
+//                 'Invalid user role'
+//             );
+//     }
+
+//     return statsData;
+// };
+
+// // ═══════════════════════════════════════════════════════════════
+// // ADMIN STATS
+// // ═══════════════════════════════════════════════════════════════
+
+// const getAdminStats = async () => {
+//     const [
+//         totalUsers,
+//         totalIdeas,
+//         totalVotes,
+//         revenueResult,
+//         draft,
+//         underReview,
+//         approved,
+//         rejected,
+//         totalComments,
+//     ] = await Promise.all([
+//         prisma.user.count({
+//             where: {
+//                 role: 'MEMBER',
+//             },
+//         }),
+//         prisma.idea.count({
+//             where: {
+//                 isDeleted: false,
+//             },
+//         }),
+//         prisma.vote.count(),
+//         prisma.payment.aggregate({
+//             where: {
+//                 status: {
+//                     in: ['SUCCESS', 'PAID'],
+//                 },
+//             },
+//             _sum: {
+//                 amount: true,
+//             },
+//         }),
+//         prisma.idea.count({
+//             where: {
+//                 status: 'DRAFT',
+//                 isDeleted: false,
+//             },
+//         }),
+//         prisma.idea.count({
+//             where: {
+//                 status: 'UNDER_REVIEW',
+//                 isDeleted: false,
+//             },
+//         }),
+//         prisma.idea.count({
+//             where: {
+//                 status: 'APPROVED',
+//                 isDeleted: false,
+//             },
+//         }),
+//         prisma.idea.count({
+//             where: {
+//                 status: 'REJECTED',
+//                 isDeleted: false,
+//             },
+//         }),
+//         prisma.comment.count(),
+//     ]);
+
+//     return {
+//         totalUsers,
+//         totalIdeas,
+//         totalVotes,
+//         totalComments,
+//         totalRevenue: revenueResult._sum.amount ?? 0,
+
+//         ideaStatusSummary: {
+//             draft,
+//             underReview,
+//             approved,
+//             rejected,
+//         },
+//     };
+// };
+
+// // ═══════════════════════════════════════════════════════════════
+// // MEMBER STATS
+// // ═══════════════════════════════════════════════════════════════
+
+// const getMemberStats = async (userId: string) => {
+//     const [
+//         totalIdeas,
+//         draft,
+//         underReview,
+//         approved,
+//         rejected,
+//         totalVotesReceived,
+//         totalCommentsReceived,
+//     ] = await Promise.all([
+//         prisma.idea.count({
+//             where: {
+//                 authorId: userId,
+//                 isDeleted: false,
+//             },
+//         }),
+//         prisma.idea.count({
+//             where: {
+//                 authorId: userId,
+//                 status: 'DRAFT',
+//                 isDeleted: false,
+//             },
+//         }),
+//         prisma.idea.count({
+//             where: {
+//                 authorId: userId,
+//                 status: 'UNDER_REVIEW',
+//                 isDeleted: false,
+//             },
+//         }),
+//         prisma.idea.count({
+//             where: {
+//                 authorId: userId,
+//                 status: 'APPROVED',
+//                 isDeleted: false,
+//             },
+//         }),
+//         prisma.idea.count({
+//             where: {
+//                 authorId: userId,
+//                 status: 'REJECTED',
+//                 isDeleted: false,
+//             },
+//         }),
+//         prisma.vote.count({
+//             where: {
+//                 idea: {
+//                     authorId: userId,
+//                 },
+//             },
+//         }),
+//         prisma.comment.count({
+//             where: {
+//                 idea: {
+//                     authorId: userId,
+//                 },
+//             },
+//         }),
+//     ]);
+
+//     return {
+//         totalIdeas,
+//         totalVotesReceived,
+//         totalCommentsReceived,
+
+//         ideaStatusSummary: {
+//             draft,
+//             underReview,
+//             approved,
+//             rejected,
+//         },
+//     };
+// };
+
+// export const DashboardService = {
+//     getDashboardStatsData,
+// };
+
+
+
+
 import httpStatus from 'http-status';
 import AppError from '../../errors/AppError';
 import { prisma } from '../../lib/prisma';
-// import { IUser } from '../user/user.interface'; 
-// // অথবা তোমার IRequestUser type
-// import { IUser } from '../User/user.interface';
-// import { IUser } from '../User/user.interface';
 
-// The JWT payload contains { userId, email, role }
-type IRequestUserFromToken = {
-    userId?: string;
-    email?: string;
-    role?: string;
+export type IRequestUserFromToken = {
+    userId: string;
+    email: string;
+    role: 'ADMIN' | 'MEMBER';
 };
 
 const getDashboardStatsData = async (user: IRequestUserFromToken) => {
-    let statsData;
+    if (!user?.role) {
+        throw new AppError(
+            httpStatus.UNAUTHORIZED,
+            'Invalid authentication token',
+        );
+    }
 
     switch (user.role) {
         case 'ADMIN':
-            statsData = await getAdminStats();
-            break;
+            return await getAdminStats();
 
         case 'MEMBER':
             if (!user.userId) {
-                throw new AppError(httpStatus.BAD_REQUEST, 'Missing user id in token');
+                throw new AppError(
+                    httpStatus.BAD_REQUEST,
+                    'Missing user id in token',
+                );
             }
-            statsData = await getMemberStats(user.userId);
-            break;
+
+            return await getMemberStats(user.userId);
 
         default:
             throw new AppError(
-                httpStatus.BAD_REQUEST,
-                'Invalid user role'
+                httpStatus.FORBIDDEN,
+                'Invalid user role',
             );
     }
-
-    return statsData;
 };
 
-// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════
 // ADMIN STATS
-// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════
 
 const getAdminStats = async () => {
     const [
         totalUsers,
         totalIdeas,
         totalVotes,
+        totalComments,
         revenueResult,
         draft,
         underReview,
         approved,
         rejected,
-        totalComments,
     ] = await Promise.all([
         prisma.user.count({
             where: {
                 role: 'MEMBER',
             },
         }),
+
         prisma.idea.count({
             where: {
                 isDeleted: false,
             },
         }),
-        prisma.vote.count(),
+
+        prisma.vote.count({
+            where: {
+                idea: {
+                    isDeleted: false,
+                },
+            },
+        }),
+
+        prisma.comment.count(),
+
         prisma.payment.aggregate({
             where: {
                 status: {
@@ -297,31 +513,34 @@ const getAdminStats = async () => {
                 amount: true,
             },
         }),
+
         prisma.idea.count({
             where: {
                 status: 'DRAFT',
                 isDeleted: false,
             },
         }),
+
         prisma.idea.count({
             where: {
                 status: 'UNDER_REVIEW',
                 isDeleted: false,
             },
         }),
+
         prisma.idea.count({
             where: {
                 status: 'APPROVED',
                 isDeleted: false,
             },
         }),
+
         prisma.idea.count({
             where: {
                 status: 'REJECTED',
                 isDeleted: false,
             },
         }),
-        prisma.comment.count(),
     ]);
 
     return {
@@ -340,9 +559,9 @@ const getAdminStats = async () => {
     };
 };
 
-// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════
 // MEMBER STATS
-// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════
 
 const getMemberStats = async (userId: string) => {
     const [
@@ -360,6 +579,7 @@ const getMemberStats = async (userId: string) => {
                 isDeleted: false,
             },
         }),
+
         prisma.idea.count({
             where: {
                 authorId: userId,
@@ -367,6 +587,7 @@ const getMemberStats = async (userId: string) => {
                 isDeleted: false,
             },
         }),
+
         prisma.idea.count({
             where: {
                 authorId: userId,
@@ -374,6 +595,7 @@ const getMemberStats = async (userId: string) => {
                 isDeleted: false,
             },
         }),
+
         prisma.idea.count({
             where: {
                 authorId: userId,
@@ -381,6 +603,7 @@ const getMemberStats = async (userId: string) => {
                 isDeleted: false,
             },
         }),
+
         prisma.idea.count({
             where: {
                 authorId: userId,
@@ -388,17 +611,21 @@ const getMemberStats = async (userId: string) => {
                 isDeleted: false,
             },
         }),
+
         prisma.vote.count({
             where: {
                 idea: {
                     authorId: userId,
+                    isDeleted: false,
                 },
             },
         }),
+
         prisma.comment.count({
             where: {
                 idea: {
                     authorId: userId,
+                    isDeleted: false,
                 },
             },
         }),

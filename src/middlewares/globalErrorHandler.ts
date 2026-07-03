@@ -68,8 +68,9 @@ import { NextFunction, Request, Response } from "express";
 import { Prisma } from "../../generated/prisma";
 import config from "../config";
 import { TErrorResponse } from "../interface/error";
+import { deleteUploadedFilesFromGlobalErrorHandler } from "../utils/deleteUploadFromGolbalError";
 
-export function errorHandler(
+export  async function errorHandler(
     err: any,
     req: Request,
     res: Response,
@@ -79,6 +80,8 @@ export function errorHandler(
     if (config.NODE_ENV === "development") {
         console.log("Error from Global Error Handler:", err);
     }
+
+    await deleteUploadedFilesFromGlobalErrorHandler (req)
 
     let statusCode = 500;
     let message = err.message || "Internal Server Error";

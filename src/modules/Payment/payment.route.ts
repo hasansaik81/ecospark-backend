@@ -15,11 +15,18 @@ router.post(
 
 // router.post('/webhook', PaymentController.handleStripeWebhook);
 
+// router.post(
+//   '/webhook',
+//   express.raw({ type: 'application/json' }),
+//   PaymentController.handleStripeWebhook
+// );
+
 router.post(
-  '/webhook',
-  express.raw({ type: 'application/json' }),
+  "/webhook",
+  express.raw({ type: "application/json" }),
   PaymentController.handleStripeWebhook
 );
+
 
 router.get(
     '/verify/:ideaId',

@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import {  Request, Response } from 'express';
 import httpStatus from 'http-status';
 import config from '../../config';
 import catchAsync from '../../utils/catchAsync';
@@ -6,7 +6,7 @@ import sendResponse from '../../utils/sendResponse';
 import { AuthService } from './auth.service';
 
 const register = catchAsync(async (req: Request, res: Response) => {
-    const result = await AuthService.register(req.body);
+    const result = await AuthService.createUserIntoDb(req.body);
 
     sendResponse(res, {
         statusCode: httpStatus.CREATED,
@@ -16,30 +16,48 @@ const register = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
-const login = catchAsync(async (req: Request, res: Response) => {
-    const result = await AuthService.login(req.body);
+const loginUser = catchAsync(async (req: Request, res: Response) => {
+  const result = await AuthService.loginUserIntoDb(req.body);
 
-    // Set refresh token cookie
-    res.cookie('refreshToken', result.refreshToken, {
-        secure: config.NODE_ENV === 'production',
-        httpOnly: true,
-        sameSite: config.NODE_ENV === 'production' ? 'none' : 'lax',
-    });
+  res.cookie("refreshToken", result.refreshToken, {
+    secure: config.NODE_ENV === "production",
+    httpOnly: true,
+    sameSite: config.NODE_ENV === "production" ? "none" : "lax",
+  });
 
-    sendResponse(res, {
-        statusCode: httpStatus.OK,
-        success: true,
-        message: 'User logged in successfully',
-        data: {
-            user: result.user,
-            accessToken: result.accessToken,
-        },
-    });
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "User logged in successfully",
+    data: {
+      accessToken: result.accessToken,
+      user: result.user,
+    },
+  });
 });
 
+
+const getMe = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    throw new Error("User not authorized");
+  }
+
+  const result = await AuthService.getMe(userId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "User retrieved successfully",
+    data: result,
+  });
+});
+
+
 const refreshToken = catchAsync(async (req: Request, res: Response) => {
-    const { refreshToken } = req.cookies;
-    const result = await AuthService.refreshToken(refreshToken);
+    const token = req.cookies?.refreshToken;
+    const result = await AuthService.refreshToken(token);
 
     sendResponse(res, {
         statusCode: httpStatus.OK,
@@ -68,7 +86,9 @@ const logout = catchAsync(async (req: Request, res: Response) => {
 
 export const AuthController = {
     register,
-    login,
+    loginUser,
     refreshToken,
+     getMe,
     logout,
+    
 };

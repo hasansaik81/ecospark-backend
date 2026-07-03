@@ -34,7 +34,7 @@
 //         path: "/ideas",
 //         route: IdeaRoutes,
 //     },
-      
+
 //       {
 //         path: "/ideas",
 //         route: CommentRoutes,
@@ -52,7 +52,7 @@
 //         path: "/newsletter",
 //         route: NewsletterRoutes,
 //     },
-   
+
 
 //     {
 //         path: "/dashboard",
@@ -71,12 +71,13 @@ import { Router } from "express";
 import { AuthRoutes } from "../modules/Auth/auth.route";
 import { CategoryRoutes } from "../modules/Category/category.route";
 import { UserRoutes } from "../modules/User/user.route";
-import { IdeaRoutes } from "../modules/Idea/idea.route";
+// import { IdeaRoutes } from "../modules/Idea/idea.route";
 import { VoteRoutes } from "../modules/Vote/vote.route";
 import { CommentRoutes } from "../modules/Comment/comment.route";
 import { PaymentRoutes } from "../modules/Payment/payment.route";
 import { NewsletterRoutes } from "../modules/Newsletter/newsletter.route";
 import { DashboardRoutes } from "../modules/Dashboard/dashboard.route";
+import { IdeaRoutes } from "../modules/Idea/idea.route";
 
 const router = Router();
 
@@ -86,7 +87,7 @@ router.use("/categories", CategoryRoutes);
 router.use("/users", UserRoutes);
 
 // ✅ আপনার মেইন আইডিয়া রাউট
-router.use("/ideas", IdeaRoutes); 
+router.use("/ideas", IdeaRoutes);
 
 // 🛠️ সাব-রাউটগুলোর পাথ সম্পূর্ণ আলাদা এবং নিখুঁত করা হলো
 router.use("/idea-comments", CommentRoutes);

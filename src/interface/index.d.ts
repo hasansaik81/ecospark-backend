@@ -7,7 +7,7 @@ declare global {
         }
     }
 }
-// req.user = decoded;
+req.user = decoded;
 
 
 

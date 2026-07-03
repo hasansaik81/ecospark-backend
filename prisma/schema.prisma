@@ -32,12 +32,17 @@ enum IdeaStatus {
 enum PaymentStatus {
   FREE
   PAID
+  PENDING
+  SUCCESS
+  FAILED
 }
 
 enum VoteType {
   UPVOTE
   DOWNVOTE
 }
+
+
 
 // ─────────────────────────────────────────────
 //  User
@@ -170,9 +175,18 @@ model Payment {
   id              String   @id @default(uuid())
   amount          Float
   transactionId   String   @unique   // from payment gateway
-  status          String   @default("SUCCESS") // SUCCESS | FAILED | PENDING
+  paymentGatewayData Json?
+  status         PaymentStatus  @default(PENDING) // SUCCESS | FAILED | PENDING
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+
+  currency        String @default("usd")
+  paymentMethod    String @default("stripe")
+  paidAt           DateTime?
+
+   stripePaymentId String?       // paymentIntent id
+  stripeSessionId String?       // checkout session id
+  stripeEventId   String?       @unique
 
   // Foreign keys
   userId          String
@@ -186,6 +200,9 @@ model Payment {
   @@unique([userId, ideaId])
   @@map("payments")
 }
+
+
+
 
 // ─────────────────────────────────────────────
 //  Newsletter  (email subscription)

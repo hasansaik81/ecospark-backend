@@ -401,90 +401,291 @@
 
 
 
+
+// // import multer from "multer";
+// import { CloudinaryStorage } from "multer-storage-cloudinary";
+// import { cloudinaryUpload } from "./cloudinary.config"; // স্পেলিং চেক করুন
+
+// const storage = new CloudinaryStorage({
+//   cloudinary: cloudinaryUpload,
+//   params: async (req: any, file: any) => {
+//     const originalName = file.originalname;
+
+//     // ফাইলের নাম ক্লিন করা
+//     const fileNameWithoutExtension = originalName
+//       .split(".")
+//       .slice(0, -1)
+//       .join(".")
+//       .toLowerCase()
+//       .replace(/\s+/g, "-")
+//       .replace(/[^a-z0-9\-]/g, "");
+
+//     // ইউনিক নাম জেনারেট করা
+//     const uniqueName = `${Math.random().toString(36).substring(2)}-${Date.now()}-${fileNameWithoutExtension}`;
+
+//     return {
+//       folder: "ecospark/images",
+//       public_id: uniqueName,
+//       resource_type: "image",
+//     };
+//   },
+// } as any); // 👈 এই 'as any' টুকু টাইপস্ক্রিপ্টের ব্লকিং দূর করবে
+
+// // ✅ স্পষ্ট এবং ক্লিন এক্সপোর্ট
+// export const multerUpload = multer({
+//   storage,
+//   fileFilter: (req, file, cb) => {
+//     if (file.mimetype.startsWith("image/")) {
+//       cb(null, true);
+//     } else {
+//       cb(new Error("Only image files are allowed!") as any, false);
+//     }
+//   },
+// });
+
+
+
+// import multer from "multer";
+
+// const storage = multer.memoryStorage();
+
+// export const multerUpload = multer({
+//   storage,
+
+//   limits: {
+//     fileSize: 10 * 1024 * 1024,
+//   },
+
+//   fileFilter(req, file, cb) {
+//     if (file.mimetype.startsWith("image/")) {
+//       cb(null, true);
+//     } else {
+//       cb(new Error("Only image files are allowed"));
+//     }
+//   },
+// });
+
+
+
+// import multer from "multer";
+
+// // মেমোরি স্টোরেজ ব্যবহার করা হচ্ছে যেন বাফার কন্ট্রোলারে পাঠানো যায়
+// const storage = multer.memoryStorage();
+
+// export const multerUpload = multer({
+//   storage,
+//   limits: {
+//     fileSize: 10 * 1024 * 1024, // সর্বোচ্চ ১০ মেগাবাইট ফাইল সাপোর্ট করবে
+//   },
+//   fileFilter: (req, file, cb) => {
+//     // মাইম-টাইপ অথবা ফাইলের এক্সটেনশন চেক (সব ধরনের ইমেজকে পাস করবে)
+//     const isImage =
+//       file.mimetype.startsWith("image/") ||
+//       /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(file.originalname);
+
+//     if (isImage) {
+//       cb(null, true);
+//     } else {
+//       cb(new Error("Only image files are allowed") as any, false);
+//     }
+//   },
+// });
+
+
+
+
+// import express from "express";
+// import multer from "multer";
+// import auth from "../../middlewares/auth"; // আপনার প্রজেক্টের সঠিক পাথ দিন
+// import { IdeaController } from "./idea.controller";
+
+// import multer from "multer";
+
+// const storage = multer.memoryStorage();
+
+// export const multerUpload = multer({
+//   storage,
+//   limits: {
+//     fileSize: 15 * 1024 * 1024, // 15MB limit
+//   },
+//   fileFilter: (req, file, cb) => {
+//     // 🔍 ডিবাগিং: টার্মিনালে চেক করুন ফাইলটি আদেও কেমন আসছে
+//     console.log("📂 Incoming File Specs:", {
+//       mimetype: file?.mimetype,
+//       originalname: file?.originalname,
+//     });
+
+//     // ১. যদি কোনো ফাইল না থাকে বা আনডিফাইন্ড হয়, তাহলেও পাস করতে দিন (যাতে এরর না দেয়)
+//     if (!file) {
+//       return cb(null, true);
+//     }
+
+//     // ২. ইমেজের টাইপ বা এক্সটেনশন নিখুঁতভাবে চেক করা
+//     const isImage =
+//       (file.mimetype && file.mimetype.startsWith("image/")) ||
+//       (file.originalname && /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(file.originalname));
+
+//     if (isImage) {
+//       cb(null, true); // ইমেজ হলে পাস
+//     } else {
+//       cb(new Error("Only image files are allowed") as any, false);
+//     }
+//   },
+// });
+
+
+
+
 // import multer from "multer";
 // import { CloudinaryStorage } from "multer-storage-cloudinary";
 // import { cloudinaryUpload } from "./cloudinary.config";
 
 // const storage = new CloudinaryStorage({
-//     cloudinary: cloudinaryUpload,
-//     params: async (req, file) => {
-//         const originalName = file.originalname;
+//   cloudinary: cloudinaryUpload,
+//   params: async (req, file) => {
+//     const originalName = file.originalname;
+//     const extension = originalName.split(".").pop()?.toLowerCase();
 
-//         // ফাইলের নাম থেকে এক্সটেনশন বাদে বাকি অংশ ক্লিন করা
-//         const fileNameWithoutExtension = originalName
-//             .split(".")
-//             .slice(0, -1)
-//             .join(".")
-//             .toLowerCase()
-//             .replace(/\s+/g, "-")
-//             .replace(/[^a-z0-9\-]/g, "");
+//     const fileNameWithoutExtension = originalName
+//       .split(".")
+//       .slice(0, -1)
+//       .join(".")
+//       .toLowerCase()
+//       .replace(/\s+/g, "-")
+//       .replace(/[^a-z0-9-]/g, "");
 
-//         // ইউনিক ফাইলের নাম জেনারেট করা
-//         const uniqueName = `${Math.random().toString(36).substring(2)}-${Date.now()}-${fileNameWithoutExtension}`;
+//     const uniqueName =
+//       Math.random().toString(36).substring(2) +
+//       "-" +
+//       Date.now() +
+//       "-" +
+//       fileNameWithoutExtension;
 
-//         return {
-//             folder: "ecospark/images", // 👈 সরাসরি ecospark ইমেজেস ফোল্ডারে যাবে
-//             public_id: uniqueName,
-//             resource_type: "image", // 👈 PDF কন্ডিশন বাদ দিয়ে শুধু ইমেজ লক করা হলো
-//         };
-//     }
+//     return {
+//       folder: "ph-healthcare/images",
+//       public_id: uniqueName,
+//       resource_type: "image", // only image
+//     };
+//   },
 // });
 
-// // মাল্টার ফিল্টার: কেউ যেন ইমেজ ছাড়া অন্য ফাইল (যেমন PDF বা Zip) আপলোড করতে না পারে
+// const fileFilter: multer.Options["fileFilter"] = (req, file, cb) => {
+//   const allowedMimeTypes = [
+//     "image/jpeg",
+//     "image/jpg",
+//     "image/png",
+//     "image/webp",
+//     "image/gif",
+//   ];
+
+//   if (allowedMimeTypes.includes(file.mimetype)) {
+//     cb(null, true);
+//   } else {
+//     cb(new Error("Only image files are allowed."));
+//   }
+// };
+
 // export const multerUpload = multer({
-//     storage,
-//     fileFilter: (req, file, cb) => {
-//         if (file.mimetype.startsWith("image/")) {
-//             cb(null, true);
-//         } else {
-//             cb(new Error("Only image files are allowed!"));
-//         }
-//     }
+//   storage,
+//   fileFilter,
+//   limits: {
+//     fileSize: 5 * 1024 * 1024, // 5 MB
+//   },
 // });
 
 
-//  export const cloudinaryUploader = cloudinary;
 
+// import multer from "multer";
+// import { CloudinaryStorage } from "multer-storage-cloudinary";
+// import { cloudinaryUpload } from "./cloudinary.config";
+
+// const storage = new CloudinaryStorage({
+//   cloudinary: cloudinaryUpload,
+
+//   params: async (req, file) => {
+//     const originalName = file.originalname;
+
+//     const extension = originalName.split(".").pop()?.toLowerCase();
+
+//     const fileNameWithoutExtension = originalName
+//       .split(".")
+//       .slice(0, -1)
+//       .join(".")
+//       .toLowerCase()
+//       .replace(/\s+/g, "-")
+//       .replace(/[^a-z0-9-]/g, "");
+
+//     const uniqueName = `${Math.random()
+//       .toString(36)
+//       .substring(2)}-${Date.now()}-${fileNameWithoutExtension}`;
+
+//     // 🔥 FIX 1: safer folder naming
+//     const folder =
+//       extension === "gif"
+//         ? "ecospark/images/gif"
+//         : "ecospark/images";
+
+//     return {
+//       folder, // ✅ corrected
+//       public_id: uniqueName,
+
+//       // 🔥 FIX 2: explicit image type (safe for images only)
+//       resource_type: "image",
+//     };
+//   },
+// });
+
+// const fileFilter: multer.Options["fileFilter"] = (req, file, cb) => {
+//   const allowedMimeTypes = [
+//     "image/jpeg",
+//     "image/jpg",
+//     "image/png",
+//     "image/webp",
+//     "image/gif",
+//   ];
+
+//   if (allowedMimeTypes.includes(file.mimetype)) {
+//     cb(null, true);
+//   } else {
+//     cb(new Error("Only image files are allowed."));
+//   }
+// };
+
+// export const multerUpload = multer({
+//   storage,
+//   fileFilter,
+
+//   // 🔥 FIX 3: safer limits
+//   limits: {
+//     fileSize: 5 * 1024 * 1024, // 5MB
+//   },
+// });
 
 
 
 import multer from "multer";
-import { CloudinaryStorage } from "multer-storage-cloudinary";
-import { cloudinaryUpload } from "./cloudinary.config"; // স্পেলিং চেক করুন
 
-const storage = new CloudinaryStorage({
-  cloudinary: cloudinaryUpload,
-  params: async (req: any, file: any) => {
-    const originalName = file.originalname;
-
-    // ফাইলের নাম ক্লিন করা
-    const fileNameWithoutExtension = originalName
-      .split(".")
-      .slice(0, -1)
-      .join(".")
-      .toLowerCase()
-      .replace(/\s+/g, "-")
-      .replace(/[^a-z0-9\-]/g, "");
-
-    // ইউনিক নাম জেনারেট করা
-    const uniqueName = `${Math.random().toString(36).substring(2)}-${Date.now()}-${fileNameWithoutExtension}`;
-
-    return {
-      folder: "ecospark/images",
-      public_id: uniqueName,
-      resource_type: "image",
-    };
-  },
-} as any); // 👈 এই 'as any' টুকু টাইপস্ক্রিপ্টের ব্লকিং দূর করবে
-
-// ✅ স্পষ্ট এবং ক্লিন এক্সপোর্ট
 export const multerUpload = multer({
-  storage,
+  storage: multer.memoryStorage(),
+
   fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith("image/")) {
+    const allowedMimeTypes = [
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/webp",
+      "image/gif",
+       "image/pjpeg",
+    ];
+
+    if (allowedMimeTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error("Only image files are allowed!") as any, false);
+      cb(new Error("Only image files are allowed."));
     }
+  },
+
+  limits: {
+    fileSize: 5 * 1024 * 1024,
   },
 });
