@@ -281,6 +281,12 @@ const createIdea = catchAsync(async (req: Request, res: Response) => {
 
 
 
+
+
+
+
+
+
 const getAllIdeas = catchAsync(async (req: Request, res: Response) => {
   const query = pick(req.query as Record<string, string>, [
     'page',
@@ -302,6 +308,27 @@ const getAllIdeas = catchAsync(async (req: Request, res: Response) => {
     data,
   });
 });
+
+
+// const getIdeaById = catchAsync(async (req: Request, res: Response) => {
+//   const { id } = req.params;
+  
+//   // অথেন্টিকেশন থেকে পাওয়া ইউজার ডেটা
+//   // (req.user প্রপার্টিটি আপনার Auth Middleware থেকে আসে)
+//   const currentUserId = req.user?.id; 
+//   const currentUserRole = req.user?.role;
+
+//   const result = await IdeaService.getIdeaById(id as string , currentUserId, currentUserRole);
+
+//   sendResponse(res, {
+//     statusCode: httpStatus.OK,
+//     success: true,
+//     message: 'Idea retrieved successfully',
+//     data: result,
+//   });
+// });
+
+
 
 // const getIdeaById = catchAsync(async (req: Request, res: Response) => {
 //     const { id } = req.params as { id: string };

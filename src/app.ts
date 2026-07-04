@@ -39,7 +39,7 @@
 
 
 
-import express, { Application, Request, Response } from 'express';
+import express, { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import router from './routes'; 
@@ -60,10 +60,15 @@ app.use(cookieParser());
 app.post(
   '/api/v1/payments/webhook', 
   express.raw({ type: 'application/json' }), 
-  (req: Request, res: Response, next) => {
-    const signature = req.headers['stripe-signature'] as string;
-    const rawBody = req.body;
-    PaymentController.handleStripeWebhook(rawBody, signature).then(result => res.json(result)).catch(next);
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const signature = req.headers['stripe-signature'] as string;
+      const rawBody = req.body;
+      const result = await PaymentController.handleStripeWebhook(rawBody, signature);
+      return res.json(result);
+    } catch (err) {
+      return next(err);
+    }
   }
 );
 // 💡 অন্যান্য সাধারণ রাউটের জন্য JSON পার্সার (এটি ওয়েবভুকের নিচে থাকবে)

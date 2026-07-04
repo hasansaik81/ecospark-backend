@@ -831,6 +831,27 @@
 
 // cloudinary.config({
 //   cloud_name: CLOUD_NAME,
+export const deleteFileFromCloudinary = async (url: string) => {
+  if (!url) return;
+  try {
+    // Attempt to extract a public id from a typical Cloudinary URL
+    const regex = /\/v\d+\/(.+?)(?:\.[a-zA-Z0-9]+)+$/;
+    const match = url.match(regex);
+    const publicId = match?.[1];
+    if (!publicId) return;
+
+    // If cloudinary is configured, attempt destruction. If not, no-op.
+    if ((cloudinary as any)?.uploader?.destroy) {
+      // resource_type may vary; use image as default
+      // ignore result intentionally
+      // @ts-ignore
+      await cloudinary.uploader.destroy(publicId, { resource_type: "image" });
+    }
+  } catch (err) {
+    // swallow to avoid throwing from cleanup
+    console.error("deleteFileFromCloudinary failed:", err);
+  }
+};
 //   api_key: API_KEY,
 //   api_secret: API_SECRET,
 //   secure: true,

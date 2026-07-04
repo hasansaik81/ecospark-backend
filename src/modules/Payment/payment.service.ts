@@ -651,18 +651,35 @@ console.log("================================");
   }
 
   // Check if already purchased
-  const existingPayment = await prisma.payment.findUnique({
-    where: {
-      userId_ideaId: { userId, ideaId },
-    },
-  });
+  // const existingPayment = await prisma.payment.findUnique({
+  //   where: {
+  //     userId_ideaId: { userId, ideaId },
+  //   },
+  // });
 
-  if (existingPayment?.status === "APPROVED" || existingPayment?.status === "PAID") {
-    throw new AppError(
-      httpStatus.BAD_REQUEST,
-      "You have already purchased this idea"
-    );
-  }
+  // if (existingPayment?.status === "SUCCESS" || existingPayment?.status === "PAID") {
+  //   throw new AppError(
+  //     httpStatus.BAD_REQUEST,
+  //     "You have already purchased this idea"
+  //   );
+  // }
+
+const existingPayment = await prisma.payment.findUnique({
+  where: {
+    userId_ideaId: {
+      userId,
+      ideaId,
+    },
+  },
+});
+
+if (existingPayment?.status === "SUCCESS") {
+  throw new AppError(
+    httpStatus.BAD_REQUEST,
+    "You have already purchased this idea"
+  );
+}
+
 
   // Create Stripe session
   const session = await stripe.checkout.sessions.create({

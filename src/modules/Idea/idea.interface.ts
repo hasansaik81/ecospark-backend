@@ -20,15 +20,28 @@ export type TUpdateIdea = Partial<{
     price: number | null;
 }>;
 
+// export type TIdeaQuery = {
+//     page?: string;
+//     limit?: string;
+//     sort?: 'recent' | 'topVoted' | 'mostCommented';
+//     category?: string;
+//     isPaid?: 'free' | 'paid';
+//     search?: string;
+//     minVotes?: string;
+// };
+
+
 export type TIdeaQuery = {
     page?: string;
     limit?: string;
     sort?: 'recent' | 'topVoted' | 'mostCommented';
-    category?: string;
+    categoryId?: string; // এখানে 'category' এর বদলে 'categoryId' করে দিন
     isPaid?: 'free' | 'paid';
     search?: string;
     minVotes?: string;
 };
+
+
 
 export type TIdeaStatusPayload = {
     feedback: string;

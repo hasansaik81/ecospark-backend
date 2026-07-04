@@ -329,9 +329,6 @@ import AppError from "../../errors/AppError";
 // );
 
 
-console.log("Idea:", idea);
-console.log("Price:", idea?.price);
-
 const createCheckoutSession = catchAsync(async (req: Request, res: Response) => {
   if (!req.user?.id) {
     return res.status(401).json({ error: "Unauthorized" });

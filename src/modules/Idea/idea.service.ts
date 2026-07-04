@@ -842,69 +842,183 @@ import {
 } from './idea.interface';
 import { PaymentStatus, Prisma } from '../../../generated/prisma';
 
-// 🔍 ১. হোয়্যার ক্লজ বিল্ডার (পাবলিক ও অ্যাডমিন ফিল্টারিং এর জন্য)
+// // 🔍 ১. হোয়্যার ক্লজ বিল্ডার (পাবলিক ও অ্যাডমিন ফিল্টারিং এর জন্য)
+// const buildIdeaWhereClause = (
+//     query: TIdeaQuery,
+//     isAdmin = false,
+//     userId?: string,
+// ): Prisma.IdeaWhereInput => {
+//     const conditions: Prisma.IdeaWhereInput[] = [];
+
+//     // সবসময় ডিলিট হওয়া আইডিয়া বাদ থাকবে
+//     conditions.push({
+//         isDeleted: false,
+//     });
+
+//     // পাবলিক ফিল্টার: অ্যাডমিন না হলে শুধুমাত্র APPROVED আইডিয়া দেখতে পাবে
+//     if (!isAdmin) {
+//         conditions.push({
+//             status: 'APPROVED',
+//         });
+//     }
+
+//     // মেম্বার নিজের আইডিয়া দেখতে চাইলে (ঐচ্ছিক ফিল্টার)
+//     if (userId) {
+//         conditions.push({
+//             authorId: userId,
+//         });
+//     }
+
+//     if (query.category) {
+//         conditions.push({
+//             categoryId: query.category,
+//         });
+//     }
+
+//     if (query.search) {
+//         conditions.push({
+//             OR: [
+//                 { title: { contains: query.search, mode: 'insensitive' } },
+//                 { problemStatement: { contains: query.search, mode: 'insensitive' } },
+//                 { proposedSolution: { contains: query.search, mode: 'insensitive' } },
+//             ],
+//         });
+//     }
+
+//     // 💰 পেইড এবং ফ্রি আইডিয়া লজিক
+//     if (query.isPaid === 'paid') {
+//         conditions.push({
+//             price: { gt: 0 },
+//         });
+//     }
+
+//     if (query.isPaid === 'free') {
+//         conditions.push({
+//             OR: [
+//                 { price: null },
+//                 { price: 0 },
+//             ],
+//         });
+//     }
+
+//     return {
+//         AND: conditions,
+//     };
+// };
+
+
+
+
+// import { Prisma } from "../../../generated/prisma";
+// import { TIdeaQuery } from "./idea.interface";
+
+
+
+// const buildIdeaWhereClause = (
+//   query: TIdeaQuery,
+//   isAdmin = false,
+// ): Prisma.IdeaWhereInput => {
+//   const where: Prisma.IdeaWhereInput = {
+//     isDeleted: false,
+//   };
+
+//   // Public only approved ideas
+//   if (!isAdmin) {
+//     where.status = "APPROVED";
+//   }
+
+//   // Category Filter
+//   if (query.category) {
+//     where.categoryId = query.category;
+//   }
+
+//   // Search
+//   if (query.search) {
+//     where.OR = [
+//       {
+//         title: {
+//           contains: query.search,
+//           mode: "insensitive",
+//         },
+//       },
+//       {
+//         problemStatement: {
+//           contains: query.search,
+//           mode: "insensitive",
+//         },
+//       },
+//       {
+//         proposedSolution: {
+//           contains: query.search,
+//           mode: "insensitive",
+//         },
+//       },
+//       {
+//         description: {
+//           contains: query.search,
+//           mode: "insensitive",
+//         },
+//       },
+//     ];
+//   }
+
+//   // Payment Filter
+//   if (query.isPaid === "paid") {
+//     where.paymentStatus = PaymentStatus.PAID;
+//   }
+
+//   if (query.isPaid === "free") {
+//     where.paymentStatus = PaymentStatus.FREE;
+//   }
+
+//   return where;
+// };
+
 const buildIdeaWhereClause = (
-    query: TIdeaQuery,
-    isAdmin = false,
-    userId?: string,
+  query: TIdeaQuery,
+  isAdmin = false,
+  userId?: string
 ): Prisma.IdeaWhereInput => {
-    const conditions: Prisma.IdeaWhereInput[] = [];
+  const where: Prisma.IdeaWhereInput = {
+    isDeleted: false,
+  };
 
-    // সবসময় ডিলিট হওয়া আইডিয়া বাদ থাকবে
-    conditions.push({
-        isDeleted: false,
-    });
+  // ১. ইউজার ফিল্টার (যদি অ্যাডমিন না হয় এবং userId থাকে)
+  if (!isAdmin && userId) {
+    where.authorId = userId; 
+  }
 
-    // পাবলিক ফিল্টার: অ্যাডমিন না হলে শুধুমাত্র APPROVED আইডিয়া দেখতে পাবে
-    if (!isAdmin) {
-        conditions.push({
-            status: 'APPROVED',
-        });
-    }
+  // ২. শুধুমাত্র অ্যাপ্রুভড আইডিয়া দেখানোর লজিক (অ্যাডমিন বাদে সবার জন্য)
+  if (!isAdmin) {
+    where.status = "APPROVED";
+  }
 
-    // মেম্বার নিজের আইডিয়া দেখতে চাইলে (ঐচ্ছিক ফিল্টার)
-    if (userId) {
-        conditions.push({
-            authorId: userId,
-        });
-    }
+  // ৩. ক্যাটাগরি ফিল্টার
+  if (query.categoryId) {
+    where.categoryId = query.categoryId;
+  }
 
-    if (query.category) {
-        conditions.push({
-            categoryId: query.category,
-        });
-    }
+  // ৪. সার্চ লজিক (Title, Problem, Solution, Description এ সার্চ করবে)
+  if (query.search) {
+    where.OR = [
+      { title: { contains: query.search, mode: "insensitive" } },
+      { problemStatement: { contains: query.search, mode: "insensitive" } },
+      { proposedSolution: { contains: query.search, mode: "insensitive" } },
+      { description: { contains: query.search, mode: "insensitive" } },
+    ];
+  }
 
-    if (query.search) {
-        conditions.push({
-            OR: [
-                { title: { contains: query.search, mode: 'insensitive' } },
-                { problemStatement: { contains: query.search, mode: 'insensitive' } },
-                { proposedSolution: { contains: query.search, mode: 'insensitive' } },
-            ],
-        });
-    }
+  // ৫. পেমেন্ট স্ট্যাটাস ফিল্টার
+  if (query.isPaid === "paid") {
+    where.paymentStatus = "PAID";
+  } else if (query.isPaid === "free") {
+    where.paymentStatus = "FREE";
+  }
 
-    // 💰 পেইড এবং ফ্রি আইডিয়া লজিক
-    if (query.isPaid === 'paid') {
-        conditions.push({
-            price: { gt: 0 },
-        });
-    }
-
-    if (query.isPaid === 'free') {
-        conditions.push({
-            OR: [
-                { price: null },
-                { price: 0 },
-            ],
-        });
-    }
-
-    return {
-        AND: conditions,
-    };
+  return where;
 };
+
+
 
 // 📝 ২. নতুন আইডিয়া তৈরি করা (সরাসরি APPROVED লজিকসহ)
 const createIdea = async (payload: TCreateIdea, authorId: string) => {
@@ -963,6 +1077,8 @@ const createIdea = async (payload: TCreateIdea, authorId: string) => {
 
     return result;
 };
+
+
 
 // 📋 ৩. পাবলিক ইউজারদের জন্য সব আইডিয়া আনা
 const getAllIdeas = async (query: TIdeaQuery, userId?: string) => {
@@ -1081,63 +1197,124 @@ const getAllIdeasAdmin = async (query: TIdeaQuery) => {
 
 
 
+// export const getIdeaById = async (
+//   id: string,
+//   currentUserId?: string,
+//   currentUserRole?: string
+// ) => {
+//   const idea = await prisma.idea.findUnique({
+//     where: { id },
+//     include: {
+//       category: {
+//         select: { id: true, name: true },
+//       },
+//       author: {
+//         select: { id: true, name: true, email: true },
+//       },
+//       _count: {
+//         select: { votes: true, comments: true },
+//       },
+//     },
+//   });
+
+//   // ❌ not found
+//   if (!idea || idea.isDeleted) {
+//     throw new AppError(httpStatus.NOT_FOUND, "Idea not found");
+//   }
+
+//   const isOwner = currentUserId === idea.authorId;
+//   const isAdmin = currentUserRole === "ADMIN";
+//   const isFree = idea.paymentStatus === "FREE";
+
+//   // ✅ FREE idea → always allow
+//   if (isFree) {
+//     return idea;
+//   }
+
+//   // ✅ owner/admin → always allow
+//   if (isOwner || isAdmin) {
+//     return idea;
+//   }
+
+//   // ❌ no user → block
+//   if (!currentUserId) {
+//     throw new AppError(
+//       httpStatus.PAYMENT_REQUIRED,
+//       "Payment required to access this idea"
+//     );
+//   }
+
+//   // 💳 check payment
+//   const payment = await prisma.payment.findFirst({
+//     where: {
+//       ideaId: id,
+//       userId: currentUserId,
+//       status: PaymentStatus.SUCCESS,// ✅ FIXED ENUM USAGE
+//     },
+//   });
+
+//   // ❌ not paid
+//   if (!payment) {
+//     throw new AppError(
+//       httpStatus.PAYMENT_REQUIRED,
+//       "Payment required to access this idea"
+//     );
+//   }
+
+//   // ✅ allowed
+//   return idea;
+// };
+
+
+
+
 export const getIdeaById = async (
   id: string,
   currentUserId?: string,
   currentUserRole?: string
 ) => {
+  // ১. আইডিয়া খোঁজা
   const idea = await prisma.idea.findUnique({
     where: { id },
     include: {
-      category: {
-        select: { id: true, name: true },
-      },
-      author: {
-        select: { id: true, name: true, email: true },
-      },
-      _count: {
-        select: { votes: true, comments: true },
-      },
+      category: { select: { id: true, name: true } },
+      author: { select: { id: true, name: true, email: true } },
+      _count: { select: { votes: true, comments: true } },
     },
   });
 
-  // ❌ not found
+  // ২. নট ফাউন্ড চেক
   if (!idea || idea.isDeleted) {
     throw new AppError(httpStatus.NOT_FOUND, "Idea not found");
   }
 
+  // ৩. অ্যাক্সেস কন্ট্রোল লজিক
   const isOwner = currentUserId === idea.authorId;
   const isAdmin = currentUserRole === "ADMIN";
   const isFree = idea.paymentStatus === "FREE";
 
-  // ✅ FREE idea → always allow
-  if (isFree) {
+  // পাবলিক অ্যাক্সেস (ফ্রি বা ওনার বা অ্যাডমিন)
+  if (isFree || isOwner || isAdmin) {
     return idea;
   }
 
-  // ✅ owner/admin → always allow
-  if (isOwner || isAdmin) {
-    return idea;
-  }
-
-  // ❌ no user → block
+  // ৪. লগইন চেক (পেইড আইডিয়ার জন্য)
   if (!currentUserId) {
     throw new AppError(
       httpStatus.PAYMENT_REQUIRED,
-      "Payment required to access this idea"
+      "Please login to access this paid idea"
     );
   }
 
-  // 💳 check payment
+  // ৫. পেমেন্ট ভ্যালিডেশন
   const payment = await prisma.payment.findFirst({
     where: {
       ideaId: id,
       userId: currentUserId,
-      status: PaymentStatus.SUCCESS,// ✅ FIXED ENUM USAGE
+      status: PaymentStatus.SUCCESS, // জেনারেটেড এনুম ব্যবহার করা হয়েছে
     },
   });
 
-  // ❌ not paid
   if (!payment) {
     throw new AppError(
       httpStatus.PAYMENT_REQUIRED,
@@ -1145,9 +1322,10 @@ export const getIdeaById = async (
     );
   }
 
-  // ✅ allowed
   return idea;
 };
+
+
 
 
 // 🔄 ৬. আইডিয়া আপডেট করা
@@ -1231,19 +1409,48 @@ const submitIdea = async (id: string, authorId: string) => {
 };
 
 // 👤 ৯. লগইন করা ইউজারের নিজস্ব আইডিয়া লিস্ট
+// const getMyIdeas = async (authorId: string) => {
+//     return prisma.idea.findMany({
+//         where: {
+//             authorId,
+//             isDeleted: false,
+//         },
+//         include: {
+//             category: { select: { id: true, name: true } },
+//             _count: { select: { votes: true, comments: true } },
+//         },
+//         orderBy: { createdAt: 'desc' },
+//     });
+// };
+
+
 const getMyIdeas = async (authorId: string) => {
-    return prisma.idea.findMany({
-        where: {
-            authorId,
-            isDeleted: false,
+  return prisma.idea.findMany({
+    where: {
+      authorId,
+      isDeleted: false,
+    },
+    include: {
+      category: {
+        select: {
+          id: true,
+          name: true,
         },
-        include: {
-            category: { select: { id: true, name: true } },
-            _count: { select: { votes: true, comments: true } },
+      },
+      _count: {
+        select: {
+          votes: true,
+          comments: true,
         },
-        orderBy: { createdAt: 'desc' },
-    });
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
 };
+
+
 
 // 🟢 ১০. অ্যাডমিন আইডিয়া অ্যাপ্রুভ করা
 const approveIdea = async (id: string) => {
