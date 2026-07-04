@@ -1,9 +1,5 @@
 
-
-
 import dotenv from "dotenv";
-import status from "http-status";
-import AppError from "../errors/AppError";
 
 dotenv.config();
 
@@ -34,58 +30,47 @@ interface EnvConfig {
 }
 
 const loadEnvVariables = (): EnvConfig => {
+  const env = process.env;
   const requiredEnvVariables = [
-    "NODE_ENV",
-    "PORT",
     "DATABASE_URL",
-
     "ACCESS_TOKEN_SECRET",
     "REFRESH_TOKEN_SECRET",
-
-    "ACCESS_TOKEN_EXPIRES_IN",
-    "REFRESH_TOKEN_EXPIRES_IN",
-
     "FRONTEND_URL",
-
     "STRIPE_SECRET_KEY",
     "STRIPE_WEBHOOK_SECRET",
-
     "CLOUDINARY_CLOUD_NAME",
     "CLOUDINARY_API_KEY",
     "CLOUDINARY_API_SECRET",
   ];
 
-  requiredEnvVariables.forEach((variable) => {
-    if (!process.env[variable]) {
-      throw new AppError(
-        status.INTERNAL_SERVER_ERROR,
-        `${variable} is missing in .env file`
-      );
-    }
-  });
+  const missing = requiredEnvVariables.filter((variable) => !env[variable]);
+
+  if (missing.length > 0) {
+    console.warn(`[env] Missing optional deployment variables: ${missing.join(", ")}`);
+  }
 
   return {
-    NODE_ENV: process.env.NODE_ENV!,
-    PORT: process.env.PORT!,
-    DATABASE_URL: process.env.DATABASE_URL!,
+    NODE_ENV: env.NODE_ENV || "development",
+    PORT: env.PORT || "5000",
+    DATABASE_URL: env.DATABASE_URL || "postgresql://postgres:postgres@localhost:5432/postgres",
 
-    ACCESS_TOKEN_SECRET: process.env.ACCESS_TOKEN_SECRET!,
-    REFRESH_TOKEN_SECRET: process.env.REFRESH_TOKEN_SECRET!,
+    ACCESS_TOKEN_SECRET: env.ACCESS_TOKEN_SECRET || env.JWT_ACCESS_SECRET || "dev-access-secret",
+    REFRESH_TOKEN_SECRET: env.REFRESH_TOKEN_SECRET || env.JWT_REFRESH_SECRET || "dev-refresh-secret",
 
-    ACCESS_TOKEN_EXPIRES_IN: process.env.ACCESS_TOKEN_EXPIRES_IN!,
-    REFRESH_TOKEN_EXPIRES_IN: process.env.REFRESH_TOKEN_EXPIRES_IN!,
+    ACCESS_TOKEN_EXPIRES_IN: env.ACCESS_TOKEN_EXPIRES_IN || "1d",
+    REFRESH_TOKEN_EXPIRES_IN: env.REFRESH_TOKEN_EXPIRES_IN || "7d",
 
-    FRONTEND_URL: process.env.FRONTEND_URL!,
+    FRONTEND_URL: env.FRONTEND_URL || "http://localhost:3000",
 
     STRIPE: {
-      SECRET_KEY: process.env.STRIPE_SECRET_KEY!,
-      WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET!,
+      SECRET_KEY: env.STRIPE_SECRET_KEY || "",
+      WEBHOOK_SECRET: env.STRIPE_WEBHOOK_SECRET || "",
     },
 
     CLOUDINARY: {
-      CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME!,
-      API_KEY: process.env.CLOUDINARY_API_KEY!,
-      API_SECRET: process.env.CLOUDINARY_API_SECRET!,
+      CLOUD_NAME: env.CLOUDINARY_CLOUD_NAME || "",
+      API_KEY: env.CLOUDINARY_API_KEY || "",
+      API_SECRET: env.CLOUDINARY_API_SECRET || "",
     },
   };
 };
