@@ -6,7 +6,6 @@ import { prisma } from '../../lib/prisma';
 import { UserSelectedFields } from './user.constant';
 import { TChangePassword, TUpdateProfile } from './user.interface';
 
-// ─── Get My Profile ────────────────────────────────────────────────────────────
 const getMyProfile = async (userId: string) => {
     const user = await prisma.user.findUnique({
         where: { id: userId },
@@ -29,7 +28,7 @@ const getMyProfile = async (userId: string) => {
     return user;
 };
 
-// ─── Update My Profile ─────────────────────────────────────────────────────────
+
 const updateMyProfile = async (userId: string, payload: TUpdateProfile) => {
     const user = await prisma.user.findUnique({ where: { id: userId } });
 
@@ -55,7 +54,7 @@ const updateMyProfile = async (userId: string, payload: TUpdateProfile) => {
     return updatedUser;
 };
 
-// ─── Change Password ────────────────────────────────────────────────────────────
+
 const changePassword = async (
     userId: string,
     payload: TChangePassword,
@@ -106,7 +105,7 @@ const changePassword = async (
     return { message: 'Password changed successfully' };
 };
 
-// ─── Admin: Get All Users ───────────────────────────────────────────────────────
+
 const getAllUsers = async () => {
     const users = await prisma.user.findMany({
         select: {
@@ -125,7 +124,7 @@ const getAllUsers = async () => {
     return users;
 };
 
-// ─── Admin: Get Single User ─────────────────────────────────────────────────────
+
 const getUserById = async (id: string) => {
     const user = await prisma.user.findUnique({
         where: { id },
@@ -148,7 +147,7 @@ const getUserById = async (id: string) => {
     return user;
 };
 
-// ─── Admin: Update User Status ──────────────────────────────────────────────────
+
 const updateUserStatus = async (id: string, status: 'ACTIVE' | 'DEACTIVATED') => {
     const user = await prisma.user.findUnique({ where: { id } });
 
@@ -172,7 +171,7 @@ const updateUserStatus = async (id: string, status: 'ACTIVE' | 'DEACTIVATED') =>
     return updatedUser;
 };
 
-// ─── Admin: Update User Role ────────────────────────────────────────────────────
+
 const updateUserRole = async (id: string, role: 'ADMIN' | 'MEMBER') => {
     const user = await prisma.user.findUnique({ where: { id } });
 

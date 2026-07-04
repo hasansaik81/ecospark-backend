@@ -1,4 +1,4 @@
-// ─── Dashboard Types ────────────────────────────────────────────────────────────
+//  Dashboard Types ─
 
 export type TAdminStats = {
     totalUsers: number;

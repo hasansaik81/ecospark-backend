@@ -6,7 +6,7 @@ import sendResponse from '../../utils/sendResponse';
 import { CategoryFilterableFields } from './category.constant';
 import { CategoryService } from './category.service';
 
-// ─── Create Category ─────────────────────────────────────────────────────────
+//  Create Category 
 const createCategory = catchAsync(async (req: Request, res: Response) => {
     const result = await CategoryService.createCategory(req.body);
 
@@ -18,7 +18,7 @@ const createCategory = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
-// ─── Get All Categories (Search / Filter / Sort / Paginate) ──────────────────
+//  Get All Categories (Search / Filter / Sort / Paginate) 
 const getAllCategories = catchAsync(async (req: Request, res: Response) => {
     // Extract whitelisted filter fields + pagination/sort fields
     const query = req.query as Record<string, string>;
@@ -39,7 +39,7 @@ const getAllCategories = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
-// ─── Get Category By Id ──────────────────────────────────────────────────────
+//  Get Category By Id 
 const getCategoryById = catchAsync(async (req: Request, res: Response) => {
     const { id } = req.params as { id: string };
     const result = await CategoryService.getCategoryById(id);
@@ -52,7 +52,7 @@ const getCategoryById = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
-// ─── Update Category ─────────────────────────────────────────────────────────
+// Update Category 
 const updateCategory = catchAsync(async (req: Request, res: Response) => {
     const { id } = req.params as { id: string };
     const result = await CategoryService.updateCategory(id, req.body);
@@ -65,7 +65,7 @@ const updateCategory = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
-// ─── Delete Category ─────────────────────────────────────────────────────────
+//  Delete Category 
 const deleteCategory = catchAsync(async (req: Request, res: Response) => {
     const { id } = req.params as { id: string };
     const result = await CategoryService.deleteCategory(id);

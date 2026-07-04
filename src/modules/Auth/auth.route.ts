@@ -52,11 +52,6 @@ router.post(
     AuthController.loginUser
 );
 
-// router.post(
-//     '/login',
-//     AuthController.loginUser
-// );
-
 
 
 router.post(
@@ -70,10 +65,10 @@ router.post(
     AuthController.logout,
 );
 
-// প্রোফাইল বা বর্তমান ইউজারের ডাটা দেখার জন্য
+
 // router.get(
 //     '/me',
-//     auth(Role.ADMIN, Role.MEMBER), // রোলগুলো আপনার ডাটাবেস অনুযায়ী দিবেন
+//     auth(Role.ADMIN, Role.MEMBER), 
 //     AuthController.getMe,
 // );
 

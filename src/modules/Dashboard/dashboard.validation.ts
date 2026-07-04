@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-// ─── Admin: Reject Idea ─────────────────────────────────────────────────────────
+//  Admin: Reject Idea 
 const rejectIdeaSchema = z.object({
     body: z.object({
         feedback: z
@@ -10,7 +10,7 @@ const rejectIdeaSchema = z.object({
     }),
 });
 
-// ─── Admin: Update User Status ──────────────────────────────────────────────────
+// Admin: Update User Status 
 const updateUserStatusSchema = z.object({
     body: z.object({
         status: z.enum(['ACTIVE', 'DEACTIVATED'], {
@@ -19,7 +19,7 @@ const updateUserStatusSchema = z.object({
     }),
 });
 
-// ─── Admin: Update User Role ────────────────────────────────────────────────────
+//  Admin: Update User Role 
 const updateUserRoleSchema = z.object({
     body: z.object({
         role: z.enum(['ADMIN', 'MEMBER'], {

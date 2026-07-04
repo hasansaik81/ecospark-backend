@@ -20,15 +20,6 @@ export type TUpdateIdea = Partial<{
     price: number | null;
 }>;
 
-// export type TIdeaQuery = {
-//     page?: string;
-//     limit?: string;
-//     sort?: 'recent' | 'topVoted' | 'mostCommented';
-//     category?: string;
-//     isPaid?: 'free' | 'paid';
-//     search?: string;
-//     minVotes?: string;
-// };
 
 
 export type TIdeaQuery = {

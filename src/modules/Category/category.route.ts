@@ -6,22 +6,13 @@ import { categoryValidationSchema } from './category.validation';
 
 const router = express.Router();
 
-/**
- * GET /api/categories
- * Retrieve all categories (Public)
- */
+
 router.get('/', CategoryController.getAllCategories);
 
-/**
- * GET /api/categories/:id
- * Retrieve a specific category (Public)
- */
+
 router.get('/:id', CategoryController.getCategoryById);
 
-/**
- * POST /api/categories
- * Create a new category (Admin only)
- */
+
 router.post(
     '/',
     auth('ADMIN'),
@@ -29,10 +20,8 @@ router.post(
     CategoryController.createCategory,
 );
 
-/**
- * PATCH /api/categories/:id
- * Update an existing category (Admin only)
- */
+
+ 
 router.patch(
     '/:id',
     auth('ADMIN'),
@@ -40,10 +29,7 @@ router.patch(
     CategoryController.updateCategory,
 );
 
-/**
- * DELETE /api/categories/:id
- * Delete a category (Admin only)
- */
+
 router.delete(
     '/:id',
     auth('ADMIN'),

@@ -2,10 +2,7 @@ import { Prisma } from '../../generated/prisma';
 import { TErrorSources, TGenericErrorResponse } from '../interface/error';
 // import { TErrorSources, TGenericErrorResponse } from '../interface/error';
 
-/**
- * Handles Prisma Client Known Request Errors
- * These include constraint violations, record not found, etc.
- */
+
 const handlePrismaError = (
     err: Prisma.PrismaClientKnownRequestError,
 ): TGenericErrorResponse => {

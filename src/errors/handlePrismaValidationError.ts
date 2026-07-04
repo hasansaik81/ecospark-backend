@@ -1,10 +1,6 @@
 import { Prisma } from '../../generated/prisma';
 import { TErrorSources, TGenericErrorResponse } from '../interface/error';
 
-/**
- * Handles Prisma Validation Errors
- * These occur when the data doesn't match the schema requirements
- */
 const handlePrismaValidationError = (
     err: Prisma.PrismaClientValidationError,
 ): TGenericErrorResponse => {

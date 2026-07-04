@@ -4,28 +4,6 @@ import validateRequest from '../../middlewares/validateRequest';
 import { CommentController } from './comment.controller';
 import { commentValidationSchema } from './comment.validation';
 
-// const router = express.Router();
-
-// router.get(
-//     '/ideas/:id/comments',
-//     validateRequest(commentValidationSchema.getComments),
-//     CommentController.getComments,
-// );
-
-// router.post(
-//     '/ideas/:id/comments',
-//     auth('MEMBER'),
-//     validateRequest(commentValidationSchema.createComment),
-//     CommentController.createComment,
-// );
-
-// router.delete(
-//     '/comments/:id',
-//     auth(),
-//     validateRequest(commentValidationSchema.deleteComment),
-//     CommentController.deleteComment,
-// );
-
 
 
 // src/app/modules/Comment/comment.route.ts

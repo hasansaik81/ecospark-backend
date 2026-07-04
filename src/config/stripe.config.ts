@@ -1,7 +1,4 @@
-// import Stripe from "stripe";
-// import { envVars } from "./env";
 
-// export const stripe = new Stripe(envVars.STRIPE.STRIPE_SECRET_KEY)
 
 
 import Stripe from "stripe";
@@ -16,20 +13,3 @@ if (!stripeSecret) {
 export const stripe = new Stripe(stripeSecret, {
 	// apiVersion: "2024-06-20",
 });
-
-// import Stripe from "stripe";
-// import { envVars } from "./env";
-
-// export const stripe = new Stripe(envVars.STRIPE.SECRET_KEY, {
-//   // apiVersion: "2024-06-20",
-// });
-
-
-// import Stripe from "stripe";
-// import { loadEnvVariables } from "./env";
-// // ...existing code...
-// const envVars = loadEnvVariables();
-
-// export const stripe = new Stripe(envVars.STRIPE.SECRET_KEY, {
-//   // apiVersion: "2024-06-20",
-// });

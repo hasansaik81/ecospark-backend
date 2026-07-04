@@ -5,7 +5,7 @@ import calculatePagination from '../../utils/pagination';
 import { CategorySearchableFields, CategorySortableFields } from './category.constant';
 import { TCategory, TCategoryQuery } from './category.interface';
 
-// ─── Create Category ─────────────────────────────────────────────────────────
+//  Create Category 
 const createCategory = async (payload: TCategory) => {
     const existingCategory = await prisma.category.findUnique({
         where: { name: payload.name },
@@ -22,11 +22,11 @@ const createCategory = async (payload: TCategory) => {
     return result;
 };
 
-// ─── Get All Categories (Search / Filter / Sort / Paginate) ──────────────────
+//  Get All Categories (Search / Filter / Sort / Paginate)
 const getAllCategories = async (query: TCategoryQuery) => {
     const { search, name, ...paginationOptions } = query;
 
-    // ── 1. Pagination & Sorting ─────────────────────────────────────────────
+    //  1. Pagination & Sorting 
     const defaultSortBy = 'name'; // Alphabetical by default
     const { page, limit, skip, sortBy, sortOrder } = calculatePagination(
         paginationOptions,
@@ -40,7 +40,7 @@ const getAllCategories = async (query: TCategoryQuery) => {
         ? sortBy
         : defaultSortBy;
 
-    // ── 2. Build WHERE clause ────────────────────────────────────────────────
+    //  2. Build WHERE clause 
     const andConditions: object[] = [];
 
     // Exact filter: ?name=Energy
@@ -61,7 +61,7 @@ const getAllCategories = async (query: TCategoryQuery) => {
 
     const where = andConditions.length > 0 ? { AND: andConditions } : {};
 
-    // ── 3. Execute queries in parallel ──────────────────────────────────────
+    // 3. Execute queries in parallel 
     const [result, total] = await Promise.all([
         prisma.category.findMany({
             where,
@@ -83,7 +83,7 @@ const getAllCategories = async (query: TCategoryQuery) => {
     };
 };
 
-// ─── Get Category By Id ──────────────────────────────────────────────────────
+//  Get Category By Id 
 const getCategoryById = async (id: string) => {
     const category = await prisma.category.findUnique({
         where: { id },
@@ -96,7 +96,7 @@ const getCategoryById = async (id: string) => {
     return category;
 };
 
-// ─── Update Category ─────────────────────────────────────────────────────────
+//  Update Category 
 const updateCategory = async (id: string, payload: Partial<TCategory>) => {
     const category = await prisma.category.findUnique({
         where: { id },
@@ -127,7 +127,7 @@ const updateCategory = async (id: string, payload: Partial<TCategory>) => {
     return result;
 };
 
-// ─── Delete Category ─────────────────────────────────────────────────────────
+// Delete Category 
 const deleteCategory = async (id: string) => {
     const category = await prisma.category.findUnique({
         where: { id },
